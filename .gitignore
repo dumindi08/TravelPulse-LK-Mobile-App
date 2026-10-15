@@ -1,0 +1,24 @@
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+
+# Node.js backend
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Logs
+*.log
+
+# Flutter and Android (the Flutter .gitignore inside mobile-app/ adds more)
+*.jks
+*.keystore
+key.properties
+local.properties
+
+# Windows and editor junk
+Thumbs.db
+desktop.ini
+.DS_Store
+.idea/
