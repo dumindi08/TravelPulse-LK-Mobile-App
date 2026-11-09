@@ -433,7 +433,35 @@ Authorization: Bearer <JWT_ACCESS_TOKEN>
 
 ---
 
-### 2.3. Module 3: Suneth — Crowd Intelligence & Report Reliability Engine
+#### 2.2.5. Delete Community Report
+* **Method:** `DELETE`
+* **URL:** `/api/v1/reports/:id`
+* **Owning Module:** Dumindi
+* **Auth Requirement:** Authenticated (`Bearer <JWT>`)
+* **Security & Authorization Rules:**
+  * Authentication is mandatory.
+  * The backend resolves the requester identity strictly from `req.user.id` (extracted from the cryptographically verified JWT payload).
+  * **Authorization check:** The database query strictly enforces ownership:
+    ```sql
+    DELETE FROM community_reports WHERE id = :reportId AND user_id = :authenticatedUserId;
+    ```
+  * If the requester possesses `role: 'moderator'` or `'admin'`, deletion of any report is permitted.
+  * Client-supplied user IDs in headers, body, or queries are strictly ignored. Deletion authorization never relies on Flutter UI visibility checks.
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Report deleted successfully",
+  "data": {
+    "deletedReportId": 1045
+  }
+}
+```
+* **Error Responses:**
+  * `401 Unauthorized`: Token missing, malformed, or expired.
+  * `403 Forbidden`: User attempts to delete a report authored by someone else (`code: "FORBIDDEN_DELETE"`).
+  * `404 Not Found`: Report does not exist (`code: "RESOURCE_NOT_FOUND"`).
 
 #### 2.3.1. Vote on Community Report
 * **Method:** `POST`

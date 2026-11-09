@@ -226,6 +226,7 @@ erDiagram
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | BIGINT UNSIGNED | No | AUTO_INCREMENT | **Primary Key** |
 | `user_id` | BIGINT UNSIGNED | No | None | **FK** -> `users(id)` ON DELETE CASCADE |
+| `is_anonymous` | BOOLEAN | No | FALSE | Anonymous reporting flag (preserves ownership) |
 | `category_id` | SMALLINT UNSIGNED | No | None | **FK** -> `report_categories(id)` ON DELETE RESTRICT |
 | `route_id` | BIGINT UNSIGNED | Yes | NULL | **FK** -> `transport_routes(id)` ON DELETE SET NULL |
 | `stop_id` | BIGINT UNSIGNED | Yes | NULL | **FK** -> `route_stops(id)` ON DELETE SET NULL |
@@ -234,6 +235,7 @@ erDiagram
 | `location_description` | VARCHAR(255) | Yes | NULL | Free-text landmark/street name |
 | `title` | VARCHAR(150) | No | None | Short report title |
 | `description` | TEXT | No | None | Detailed commuter observations |
+| `disruption_reason` | VARCHAR(100) | Yes | NULL | Operational reason (breakdown, flood, strike, etc.) |
 | `media_url` | VARCHAR(255) | Yes | NULL | Cloud URL of attached evidence photo |
 | `status` | ENUM('submitted', 'verified', 'disputed', 'resolved', 'rejected', 'expired') | No | 'submitted' | Lifecycle status |
 | `created_at` | TIMESTAMP | No | CURRENT_TIMESTAMP | Submission timestamp |
@@ -335,20 +337,20 @@ erDiagram
 
 #### Table 16: `crowd_aggregations`
 * **Owning Module:** Suneth
-* **Purpose:** Time-windowed consensus crowd metrics for stops and routes.
+* **Purpose:** Time-windowed consensus crowd metrics for stops and routes. Enforces relational integrity using dual nullable foreign keys and a MySQL 8.0+ `CHECK` constraint.
 * **Columns:**
 
 | Column Name | Data Type | Nullable | Default | Description / Constraints |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | BIGINT UNSIGNED | No | AUTO_INCREMENT | **Primary Key** |
-| `target_type` | ENUM('stop', 'route') | No | None | Aggregation entity type |
-| `target_id` | BIGINT UNSIGNED | No | None | ID of stop or route |
+| `route_id` | BIGINT UNSIGNED | Yes | NULL | **FK** -> `transport_routes(id)` ON DELETE CASCADE |
+| `stop_id` | BIGINT UNSIGNED | Yes | NULL | **FK** -> `route_stops(id)` ON DELETE CASCADE |
 | `time_slot` | DATETIME | No | None | 15-minute time bucket (e.g. '2026-11-09 17:30:00') |
 | `aggregated_crowd_level` | ENUM('empty', 'moderate', 'crowded', 'very_crowded') | No | None | Statistical mode/median crowd |
 | `sample_count` | INT UNSIGNED | No | 1 | Number of data points in window |
-| `confidence_score`| DECIMAL(5, 2) | No | 0.00 | Statistical confidence |
+| `confidence_score`| DECIMAL(5, 2) | No | 0.00 | Statistical confidence score |
 | `last_updated_at` | TIMESTAMP | No | CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Aggregation timestamp |
-| *Constraints* | Unique: (`target_type`, `target_id`, `time_slot`) | | | |
+| *Constraints* | **CHECK**: `((route_id IS NOT NULL AND stop_id IS NULL) OR (route_id IS NULL AND stop_id IS NOT NULL))` | | | Guarantees exactly one parent entity is populated |
 
 ---
 
