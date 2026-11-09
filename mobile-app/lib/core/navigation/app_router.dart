@@ -7,6 +7,11 @@ import '../../modules/dumindi/providers/report_provider.dart';
 import '../../modules/dumindi/models/community_report_model.dart';
 import '../../modules/suneth/providers/crowd_provider.dart';
 import '../../modules/suneth/views/crowd_status_view.dart';
+import '../../modules/thimaya/providers/map_provider.dart';
+import '../../modules/thimaya/providers/alert_provider.dart';
+import '../../modules/thimaya/views/live_map_view.dart';
+import '../../modules/thimaya/views/alerts_view.dart';
+import '../../modules/thimaya/views/alert_settings_view.dart';
 import '../../modules/dumindi/views/create_report_view.dart';
 import '../../modules/dumindi/views/report_submitted_view.dart';
 import '../../modules/dumindi/views/recent_reports_view.dart';
@@ -28,6 +33,8 @@ class AppRouter {
   final JourneyProvider journeyProvider;
   final ReportProvider reportProvider;
   final CrowdProvider crowdProvider;
+  final MapProvider mapProvider;
+  final AlertProvider alertProvider;
 
   AppRouter({
     required this.authProvider,
@@ -35,10 +42,14 @@ class AppRouter {
     JourneyProvider? journeyProvider,
     ReportProvider? reportProvider,
     CrowdProvider? crowdProvider,
+    MapProvider? mapProvider,
+    AlertProvider? alertProvider,
   })  : routeProvider = routeProvider ?? RouteProvider(),
         journeyProvider = journeyProvider ?? JourneyProvider(),
         reportProvider = reportProvider ?? ReportProvider(),
-        crowdProvider = crowdProvider ?? CrowdProvider();
+        crowdProvider = crowdProvider ?? CrowdProvider(),
+        mapProvider = mapProvider ?? MapProvider(),
+        alertProvider = alertProvider ?? AlertProvider();
 
   Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -72,6 +83,8 @@ class AppRouter {
             journeyProvider: journeyProvider,
             reportProvider: reportProvider,
             crowdProvider: crowdProvider,
+            mapProvider: mapProvider,
+            alertProvider: alertProvider,
             initialIndex: initialIndex,
           ),
         );
@@ -184,6 +197,35 @@ class AppRouter {
             authProvider: authProvider,
             reportProvider: reportProvider,
             routeProvider: routeProvider,
+          ),
+        );
+
+      // 5. Road Conditions, Maps & Travel Alert System (Thimaya)
+      case RouteConstants.liveMap:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => LiveMapView(
+            mapProvider: mapProvider,
+            alertProvider: alertProvider,
+            reportProvider: reportProvider,
+            crowdProvider: crowdProvider,
+          ),
+        );
+
+      case RouteConstants.alerts:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => AlertsView(
+            alertProvider: alertProvider,
+          ),
+        );
+
+      case RouteConstants.alertSettings:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => AlertSettingsView(
+            alertProvider: alertProvider,
+            authProvider: authProvider,
           ),
         );
 

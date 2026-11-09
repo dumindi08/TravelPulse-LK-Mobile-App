@@ -13,9 +13,16 @@ import 'package:travelpulse_mobile/modules/suneth/models/crowd_estimate_model.da
 import 'package:travelpulse_mobile/modules/suneth/models/user_reputation_model.dart';
 import 'package:travelpulse_mobile/modules/suneth/services/crowd_service.dart';
 import 'package:travelpulse_mobile/modules/suneth/providers/crowd_provider.dart';
+import 'package:travelpulse_mobile/modules/thimaya/models/road_incident_model.dart';
+import 'package:travelpulse_mobile/modules/thimaya/models/travel_alert_model.dart';
+import 'package:travelpulse_mobile/modules/thimaya/models/alert_subscription_model.dart';
+import 'package:travelpulse_mobile/modules/thimaya/services/location_service.dart';
+import 'package:travelpulse_mobile/modules/thimaya/services/alert_service.dart';
+import 'package:travelpulse_mobile/modules/thimaya/providers/alert_provider.dart';
+import 'package:travelpulse_mobile/modules/thimaya/providers/map_provider.dart';
 
 void main() {
-  group('TravelPulse LK — Full Mobile Test Suite (Stages 2, 3, 4 & 5)', () {
+  group('TravelPulse LK — Full Mobile Test Suite (Stages 2, 3, 4, 5 & 6)', () {
     testWidgets('1. Onboarding & Welcome screen smoke test', (WidgetTester tester) async {
       final authProvider = AuthProvider();
       final routeProvider = RouteProvider();
@@ -326,6 +333,148 @@ void main() {
       expect(voteResult['userVote'], equals('upvote'));
       expect(voteResult['reliabilityScore'], greaterThanOrEqualTo(80.0));
       expect(voteResult['confidenceStatus'], equals('verified'));
+    });
+
+    test('14. RoadIncidentModel and TravelAlertModel serialization and helper properties (Thimaya)', () {
+      final incident = RoadIncidentModel(
+        id: 401,
+        sourceReportId: 101,
+        incidentType: 'flooding',
+        latitude: 6.8920,
+        longitude: 79.8580,
+        addressText: 'Bauddhaloka Mawatha near Thunmulla',
+        severity: 'critical',
+        radiusMeters: 250,
+        isActive: true,
+        startTime: DateTime.now().subtract(const Duration(hours: 2)),
+      );
+
+      expect(incident.isCritical, isTrue);
+      expect(incident.displayName, equals('Flash Flood / Waterlogging'));
+      final json = incident.toJson();
+      final reconstructed = RoadIncidentModel.fromJson(json);
+      expect(reconstructed.id, equals(401));
+      expect(reconstructed.incidentType, equals('flooding'));
+      expect(reconstructed.addressText, contains('Bauddhaloka'));
+
+      final alert = TravelAlertModel(
+        id: 501,
+        title: 'Flash Flood Warning — Thunmulla Junction',
+        message: 'Severe waterlogging at Bauddhaloka Mawatha.',
+        alertType: 'road_condition',
+        severity: 'critical',
+        targetRouteId: 1,
+        targetRouteNumber: '138',
+        targetLatitude: 6.8920,
+        targetLongitude: 79.8580,
+        targetRadiusKm: 2.5,
+        status: 'active',
+        createdAt: DateTime.now(),
+      );
+
+      expect(alert.isActive, isTrue);
+      expect(alert.isCritical, isTrue);
+      final alertJson = alert.toJson();
+      final alertReconstructed = TravelAlertModel.fromJson(alertJson);
+      expect(alertReconstructed.id, equals(501));
+      expect(alertReconstructed.targetRouteNumber, equals('138'));
+    });
+
+    test('15. LocationService GPS permissions, manual selection & distance calculation (Thimaya)', () async {
+      final locationService = LocationService();
+
+      // Default state
+      expect(locationService.hasLocationPermission, isTrue);
+      expect(locationService.currentLocation.label, contains('Colombo Fort'));
+      expect(locationService.currentLocation.isManual, isFalse);
+
+      // Distance calculation: Colombo Fort to Bambalapitiya (~5.2 km)
+      final distance = LocationService.distanceBetweenKm(
+        6.9355, 79.8530, // Fort
+        6.8890, 79.8560, // Bambalapitiya
+      );
+      expect(distance, greaterThan(4.5));
+      expect(distance, lessThan(6.0));
+
+      // Simulate GPS permission denied
+      locationService.simulatePermissionDenied(permanently: true);
+      expect(locationService.hasLocationPermission, isFalse);
+      expect(locationService.permissionState, equals(LocationPermissionState.permanentlyDenied));
+
+      // Commuter selects manual location
+      locationService.setManualLocation(
+        latitude: 6.8480,
+        longitude: 79.9265,
+        label: 'Maharagama Bus Stand',
+      );
+      expect(locationService.currentLocation.isManual, isTrue);
+      expect(locationService.currentLocation.label, equals('Maharagama Bus Stand'));
+      expect(locationService.currentLocation.latitude, equals(6.8480));
+    });
+
+    test('16. AlertService & AlertProvider loading alerts and commuter preferences (Thimaya)', () async {
+      final alertService = AlertService();
+      final alertProvider = AlertProvider(service: alertService);
+
+      await alertProvider.loadAlerts();
+      expect(alertProvider.alerts.isNotEmpty, isTrue);
+      expect(alertProvider.criticalAlerts.isNotEmpty, isTrue);
+      expect(alertProvider.hasCriticalAlerts, isTrue);
+
+      // Filter by severity
+      await alertProvider.setSeverityFilter('critical');
+      expect(alertProvider.alerts.every((a) => a.severity.toLowerCase() == 'critical'), isTrue);
+
+      // Update commuter alert subscription preferences
+      final updatedSub = await alertProvider.updateSubscription(
+        userId: 1,
+        subscriptionType: 'geo_radius',
+        centerLatitude: 6.9271,
+        centerLongitude: 79.8612,
+        radiusKm: 7.5,
+        pushNotificationsEnabled: true,
+        weatherAlerts: true,
+        roadHazards: true,
+        transitDisruptions: true,
+        soundAndVibrate: true,
+      );
+      expect(updatedSub, isTrue);
+      expect(alertProvider.subscription, isNotNull);
+      expect(alertProvider.subscription!.radiusKm, equals(7.5));
+      expect(alertProvider.subscription!.subscriptionType, equals('geo_radius'));
+
+      // Register device FCM token
+      final registered = await alertProvider.registerDeviceToken(
+        userId: 1,
+        fcmToken: 'fcm_sample_commuter_device_token_xyz123',
+        deviceType: 'android',
+      );
+      expect(registered, isTrue);
+    });
+
+    test('17. MapProvider incident filtering, search, and selection (Thimaya)', () async {
+      final mapProvider = MapProvider();
+
+      await mapProvider.loadMapData();
+      expect(mapProvider.incidents.isNotEmpty, isTrue);
+
+      // Test filtering by incident type
+      mapProvider.setTypeFilter('flooding');
+      expect(mapProvider.filteredIncidents.every((i) => i.incidentType.toLowerCase() == 'flooding'), isTrue);
+
+      // Test reset and search query
+      mapProvider.setTypeFilter('All');
+      mapProvider.setSearchQuery('Kollupitiya');
+      expect(mapProvider.filteredIncidents.any((i) => i.addressText.contains('Kollupitiya')), isTrue);
+
+      // Test incident selection for bottom preview sheet
+      final firstIncident = mapProvider.incidents.first;
+      mapProvider.selectIncident(firstIncident);
+      expect(mapProvider.selectedIncident, isNotNull);
+      expect(mapProvider.selectedIncident!.id, equals(firstIncident.id));
+
+      mapProvider.clearSelectedIncident();
+      expect(mapProvider.selectedIncident, isNull);
     });
   });
 }

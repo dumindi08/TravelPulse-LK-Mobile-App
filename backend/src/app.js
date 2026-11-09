@@ -6,6 +6,8 @@
 const express = require('express');
 const reportRoutes = require('./routes/report.routes');
 const crowdRoutes = require('./routes/crowd.routes');
+const incidentRoutes = require('./routes/incident.routes');
+const alertRoutes = require('./routes/alert.routes');
 
 const app = express();
 
@@ -39,6 +41,10 @@ app.use('/api/v1/reports', reportRoutes);
 
 // Module 3 Routes (Suneth)
 app.use('/api/v1/crowd', crowdRoutes);
+
+// Module 4 Routes (Thimaya)
+app.use('/api/v1/incidents', incidentRoutes);
+app.use('/api/v1/alerts', alertRoutes);
 
 // Fallback for undefined routes
 app.use((req, res) => {

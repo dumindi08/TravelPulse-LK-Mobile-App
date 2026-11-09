@@ -149,6 +149,134 @@ const initialCrowdAggregationsSeed = [
   { id: 5, route_id: null, stop_id: 104, time_slot: new Date().toISOString(), aggregated_crowd_level: 'moderate', sample_count: 4, confidence_score: 78.50, last_updated_at: new Date().toISOString() },
 ];
 
+const initialRoadIncidentsSeed = [
+  {
+    id: 401,
+    source_report_id: 102,
+    incident_type: 'flooding',
+    latitude: 6.8920,
+    longitude: 79.8580,
+    address_text: 'Bauddhaloka Mawatha, Thunmulla Junction, Colombo 04',
+    severity: 'high',
+    radius_meters: 250,
+    is_active: true,
+    verified_by_user_id: 5,
+    start_time: new Date(Date.now() - 70 * 60 * 1000).toISOString(),
+    end_time: null,
+    created_at: new Date(Date.now() - 70 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 402,
+    source_report_id: 101,
+    incident_type: 'road_closure',
+    latitude: 6.9147,
+    longitude: 79.8653,
+    address_text: 'Town Hall Roundabout, Colombo 07',
+    severity: 'medium',
+    radius_meters: 120,
+    is_active: true,
+    verified_by_user_id: 5,
+    start_time: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+    end_time: null,
+    created_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 403,
+    source_report_id: null,
+    incident_type: 'pothole',
+    latitude: 6.8724,
+    longitude: 79.8898,
+    address_text: 'High Level Road near Nugegoda Flyover',
+    severity: 'medium',
+    radius_meters: 50,
+    is_active: true,
+    verified_by_user_id: 5,
+    start_time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    end_time: null,
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 404,
+    source_report_id: null,
+    incident_type: 'traffic_lights_down',
+    latitude: 6.9022,
+    longitude: 79.8610,
+    address_text: 'Thimbirigasyaya Junction traffic signal malfunction',
+    severity: 'low',
+    radius_meters: 80,
+    is_active: true,
+    verified_by_user_id: 5,
+    start_time: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+    end_time: null,
+    created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+  },
+];
+
+const initialTravelAlertsSeed = [
+  {
+    id: 301,
+    title: 'Flash Flood Warning — Thunmulla Junction',
+    message: 'Severe waterlogging at Bauddhaloka Mawatha near Thunmulla roundabout. Routes 138 and 100 operating with heavy delays. Light vehicles advised to divert via Havelock Road.',
+    alert_type: 'road_condition',
+    severity: 'critical',
+    related_incident_id: 401,
+    target_route_id: 1,
+    target_route_number: '138',
+    target_latitude: 6.8920,
+    target_longitude: 79.8580,
+    target_radius_km: 2.5,
+    status: 'active',
+    created_by: 5,
+    created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    expires_at: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 302,
+    title: 'Main Line Railway Signal Interruption',
+    message: 'Signal failures between Ragama and Gampaha. Up-country commuter trains from Colombo Fort experiencing 25-30 minute delays.',
+    alert_type: 'transport_disruption',
+    severity: 'warning',
+    related_incident_id: null,
+    target_route_id: 3,
+    target_route_number: 'MAIN-RLY',
+    target_latitude: 7.0270,
+    target_longitude: 79.9230,
+    target_radius_km: 5.0,
+    status: 'active',
+    created_by: 5,
+    created_at: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+    expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 303,
+    title: 'Route 138 Centre-Lane Obstruction at Town Hall',
+    message: 'Broken down SLTB bus near Town Hall roundabout. Single lane traffic moving slowly towards Maradana.',
+    alert_type: 'transport_disruption',
+    severity: 'info',
+    related_incident_id: 402,
+    target_route_id: 1,
+    target_route_number: '138',
+    target_latitude: 6.9147,
+    target_longitude: 79.8653,
+    target_radius_km: 1.0,
+    status: 'active',
+    created_by: 5,
+    created_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+    expires_at: new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString(),
+  },
+];
+
+const initialAlertSubscriptionsSeed = [
+  { id: 1, user_id: 1, subscription_type: 'route', route_id: 1, center_latitude: null, center_longitude: null, radius_km: null, is_active: true },
+  { id: 2, user_id: 1, subscription_type: 'geo_radius', route_id: null, center_latitude: 6.9271, center_longitude: 79.8612, radius_km: 5.0, is_active: true },
+  { id: 3, user_id: 2, subscription_type: 'all_critical', route_id: null, center_latitude: null, center_longitude: null, radius_km: null, is_active: true },
+];
+
+const initialAlertDeliveriesSeed = [
+  { id: 1, alert_id: 301, user_id: 1, device_token_id: null, delivery_status: 'sent', fcm_message_id: 'fcm_mock_msg_301_001', delivered_at: new Date(Date.now() - 55 * 60 * 1000).toISOString(), created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
+  { id: 2, alert_id: 301, user_id: 2, device_token_id: null, delivery_status: 'sent', fcm_message_id: 'fcm_mock_msg_301_002', delivered_at: new Date(Date.now() - 55 * 60 * 1000).toISOString(), created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
+];
+
 /**
  * In-Memory Database Store (active for fast, reliable unit testing & offline dev)
  */
@@ -160,11 +288,21 @@ class MemoryStore {
     this.reportVotes = JSON.parse(JSON.stringify(initialReportVotesSeed));
     this.crowdEstimates = JSON.parse(JSON.stringify(initialCrowdEstimatesSeed));
     this.crowdAggregations = JSON.parse(JSON.stringify(initialCrowdAggregationsSeed));
+    this.roadIncidents = JSON.parse(JSON.stringify(initialRoadIncidentsSeed));
+    this.travelAlerts = JSON.parse(JSON.stringify(initialTravelAlertsSeed));
+    this.alertSubscriptions = JSON.parse(JSON.stringify(initialAlertSubscriptionsSeed));
+    this.alertDeliveries = JSON.parse(JSON.stringify(initialAlertDeliveriesSeed));
+    this.deviceTokens = [];
 
     this.nextReportId = 104;
     this.nextVoteId = 10;
     this.nextEstimateId = 10;
     this.nextAggregationId = 6;
+    this.nextIncidentId = 405;
+    this.nextAlertId = 304;
+    this.nextSubId = 4;
+    this.nextDeliveryId = 3;
+    this.nextTokenId = 1;
   }
 
   // ---------------------------------------------------------------------------
@@ -521,6 +659,247 @@ class MemoryStore {
   }
 
   // ---------------------------------------------------------------------------
+  // Module 4: Road Conditions, Maps & Travel Alerts (Thimaya)
+  // ---------------------------------------------------------------------------
+  getRoadIncidents({ incidentType, severity, isActive, minLat, maxLat, minLon, maxLon }) {
+    let list = [...this.roadIncidents];
+
+    if (isActive !== undefined) {
+      const activeBool = String(isActive).toLowerCase() === 'true';
+      list = list.filter((i) => i.is_active === activeBool);
+    }
+
+    if (incidentType && incidentType.toLowerCase() !== 'all') {
+      list = list.filter((i) => i.incident_type.toLowerCase() === incidentType.toLowerCase());
+    }
+
+    if (severity && severity.toLowerCase() !== 'all') {
+      list = list.filter((i) => i.severity.toLowerCase() === severity.toLowerCase());
+    }
+
+    if (minLat !== undefined && maxLat !== undefined && minLon !== undefined && maxLon !== undefined) {
+      list = list.filter((i) =>
+        i.latitude >= Number(minLat) &&
+        i.latitude <= Number(maxLat) &&
+        i.longitude >= Number(minLon) &&
+        i.longitude <= Number(maxLon)
+      );
+    }
+
+    return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
+  getRoadIncidentById(id) {
+    return this.roadIncidents.find((i) => i.id === Number(id));
+  }
+
+  createRoadIncident(data) {
+    const newIncident = {
+      id: this.nextIncidentId++,
+      source_report_id: data.source_report_id ? Number(data.source_report_id) : null,
+      incident_type: data.incident_type,
+      latitude: Number(data.latitude),
+      longitude: Number(data.longitude),
+      address_text: data.address_text || '',
+      severity: data.severity || 'medium',
+      radius_meters: data.radius_meters ? Number(data.radius_meters) : 100,
+      is_active: data.is_active !== undefined ? Boolean(data.is_active) : true,
+      verified_by_user_id: data.verified_by_user_id ? Number(data.verified_by_user_id) : null,
+      start_time: data.start_time || new Date().toISOString(),
+      end_time: data.end_time || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    this.roadIncidents.unshift(newIncident);
+    return newIncident;
+  }
+
+  /**
+   * Promotes a community report to a confirmed road incident.
+   * STRICT REQUIREMENT: Only verified reports (reliability score >= 70 OR verified by moderator)
+   * can be promoted into active road incidents!
+   */
+  promoteReportToIncident(reportId, verifierUser) {
+    const report = this.getReportById(reportId);
+    if (!report) {
+      throw new Error(`Report #${reportId} not found.`);
+    }
+
+    const isStaff = verifierUser && (verifierUser.role === 'moderator' || verifierUser.role === 'admin');
+    const isAlgorithmicVerified = report.status === 'verified' || report.confidence_status === 'verified' || report.reliability_score >= 70.0;
+
+    if (!isAlgorithmicVerified && !isStaff) {
+      throw new Error('Cannot promote report: Report is unverified (reliability score < 70) and requesting user lacks moderator privileges.');
+    }
+
+    // Map incident type based on report content
+    let incidentType = 'congestion';
+    const text = `${report.title} ${report.description} ${report.disruption_reason || ''}`.toLowerCase();
+
+    if (text.includes('flood') || text.includes('waterlog') || text.includes('inundat')) {
+      incidentType = 'flooding';
+    } else if (text.includes('pothole') || text.includes('crater')) {
+      incidentType = 'pothole';
+    } else if (text.includes('accident') || text.includes('collision') || text.includes('crash')) {
+      incidentType = 'accident';
+    } else if (text.includes('closure') || text.includes('closed') || text.includes('blocked') || text.includes('breakdown')) {
+      incidentType = 'road_closure';
+    } else if (text.includes('signal') || text.includes('traffic light')) {
+      incidentType = 'traffic_lights_down';
+    } else if (text.includes('landslide') || text.includes('earthslip')) {
+      incidentType = 'landslide';
+    }
+
+    const newIncident = this.createRoadIncident({
+      source_report_id: report.id,
+      incident_type: incidentType,
+      latitude: report.latitude,
+      longitude: report.longitude,
+      address_text: report.location_description || report.title,
+      severity: report.category_id === 4 ? 'high' : 'medium',
+      radius_meters: 150,
+      is_active: true,
+      verified_by_user_id: verifierUser ? verifierUser.id : 5,
+      start_time: report.created_at,
+    });
+
+    return newIncident;
+  }
+
+  // Travel Alerts
+  getTravelAlerts({ alertType, severity, status = 'active', routeId }) {
+    let list = [...this.travelAlerts];
+
+    if (status && status.toLowerCase() !== 'all') {
+      list = list.filter((a) => a.status.toLowerCase() === status.toLowerCase());
+    }
+
+    if (alertType && alertType.toLowerCase() !== 'all') {
+      list = list.filter((a) => a.alert_type.toLowerCase() === alertType.toLowerCase());
+    }
+
+    if (severity && severity.toLowerCase() !== 'all') {
+      list = list.filter((a) => a.severity.toLowerCase() === severity.toLowerCase());
+    }
+
+    if (routeId) {
+      list = list.filter((a) => Number(a.target_route_id) === Number(routeId));
+    }
+
+    return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
+  getTravelAlertById(id) {
+    return this.travelAlerts.find((a) => a.id === Number(id));
+  }
+
+  createTravelAlert(data) {
+    const newAlert = {
+      id: this.nextAlertId++,
+      title: data.title,
+      message: data.message,
+      alert_type: data.alert_type || 'transport_disruption',
+      severity: data.severity || 'info',
+      related_incident_id: data.related_incident_id ? Number(data.related_incident_id) : null,
+      target_route_id: data.target_route_id ? Number(data.target_route_id) : null,
+      target_route_number: data.target_route_number || null,
+      target_latitude: data.target_latitude ? Number(data.target_latitude) : null,
+      target_longitude: data.target_longitude ? Number(data.target_longitude) : null,
+      target_radius_km: data.target_radius_km ? Number(data.target_radius_km) : null,
+      status: 'active',
+      created_by: data.created_by ? Number(data.created_by) : 5,
+      created_at: new Date().toISOString(),
+      expires_at: data.expires_at || new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+    };
+    this.travelAlerts.unshift(newAlert);
+    return newAlert;
+  }
+
+  // Alert Subscriptions & Push Notifications
+  getUserAlertSubscriptions(userId) {
+    return this.alertSubscriptions.filter((s) => s.user_id === Number(userId));
+  }
+
+  saveUserAlertSubscription(userId, data) {
+    const routeId = data.routeId !== undefined ? (data.routeId ? Number(data.routeId) : null) : (data.route_id ? Number(data.route_id) : null);
+    const subType = data.subscriptionType || data.subscription_type || 'route';
+    const centerLat = data.centerLatitude !== undefined ? Number(data.centerLatitude) : (data.center_latitude !== undefined ? Number(data.center_latitude) : null);
+    const centerLon = data.centerLongitude !== undefined ? Number(data.centerLongitude) : (data.center_longitude !== undefined ? Number(data.center_longitude) : null);
+    const radiusKm = data.radiusKm !== undefined ? Number(data.radiusKm) : (data.radius_km !== undefined ? Number(data.radius_km) : null);
+    const isActive = data.isActive !== undefined ? Boolean(data.isActive) : (data.is_active !== undefined ? Boolean(data.is_active) : true);
+
+    let existing = this.alertSubscriptions.find(
+      (s) => s.user_id === Number(userId) && s.subscription_type === subType && s.route_id === routeId
+    );
+
+    if (existing) {
+      Object.assign(existing, {
+        center_latitude: centerLat !== null ? centerLat : existing.center_latitude,
+        center_longitude: centerLon !== null ? centerLon : existing.center_longitude,
+        radius_km: radiusKm !== null ? radiusKm : existing.radius_km,
+        is_active: isActive,
+      });
+      return existing;
+    } else {
+      const newSub = {
+        id: this.nextSubId++,
+        user_id: Number(userId),
+        subscription_type: subType,
+        route_id: routeId,
+        center_latitude: centerLat,
+        center_longitude: centerLon,
+        radius_km: radiusKm,
+        is_active: isActive,
+        created_at: new Date().toISOString(),
+      };
+      this.alertSubscriptions.push(newSub);
+      return newSub;
+    }
+  }
+
+  saveDeviceToken({ userId, token, platform = 'android' }) {
+    let existing = this.deviceTokens.find((t) => t.token === token);
+    if (existing) {
+      existing.user_id = Number(userId);
+      existing.platform = platform;
+      existing.updated_at = new Date().toISOString();
+      return existing;
+    }
+    const record = {
+      id: this.nextTokenId++,
+      user_id: Number(userId),
+      token,
+      platform,
+      created_at: new Date().toISOString(),
+    };
+    this.deviceTokens.push(record);
+    return record;
+  }
+
+  recordAlertDelivery({ alertId, userId, deviceTokenId, deliveryStatus = 'sent', fcmMessageId }) {
+    const delivery = {
+      id: this.nextDeliveryId++,
+      alert_id: Number(alertId),
+      user_id: Number(userId),
+      device_token_id: deviceTokenId ? Number(deviceTokenId) : null,
+      delivery_status: deliveryStatus,
+      fcm_message_id: fcmMessageId || `fcm_mock_${Date.now()}`,
+      delivered_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+    };
+    this.alertDeliveries.push(delivery);
+    return delivery;
+  }
+
+  getAlertDeliveries({ alertId, userId }) {
+    return this.alertDeliveries.filter((d) => {
+      if (alertId && Number(d.alert_id) !== Number(alertId)) return false;
+      if (userId && Number(d.user_id) !== Number(userId)) return false;
+      return true;
+    });
+  }
+
+  // ---------------------------------------------------------------------------
   // Reset store for unit tests
   // ---------------------------------------------------------------------------
   reset() {
@@ -529,10 +908,20 @@ class MemoryStore {
     this.reportVotes = JSON.parse(JSON.stringify(initialReportVotesSeed));
     this.crowdEstimates = JSON.parse(JSON.stringify(initialCrowdEstimatesSeed));
     this.crowdAggregations = JSON.parse(JSON.stringify(initialCrowdAggregationsSeed));
+    this.roadIncidents = JSON.parse(JSON.stringify(initialRoadIncidentsSeed));
+    this.travelAlerts = JSON.parse(JSON.stringify(initialTravelAlertsSeed));
+    this.alertSubscriptions = JSON.parse(JSON.stringify(initialAlertSubscriptionsSeed));
+    this.alertDeliveries = JSON.parse(JSON.stringify(initialAlertDeliveriesSeed));
+    this.deviceTokens = [];
     this.nextReportId = 104;
     this.nextVoteId = 10;
     this.nextEstimateId = 10;
     this.nextAggregationId = 6;
+    this.nextIncidentId = 405;
+    this.nextAlertId = 304;
+    this.nextSubId = 4;
+    this.nextDeliveryId = 3;
+    this.nextTokenId = 1;
   }
 }
 

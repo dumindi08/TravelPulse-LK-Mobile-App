@@ -209,15 +209,7 @@ class HomeView extends StatelessWidget {
   Widget _buildDisruptionTicker(BuildContext context) {
     return InkWell(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => RecentReportsView(
-              authProvider: authProvider,
-              reportProvider: reportProvider ?? ReportProvider(),
-              routeProvider: routeProvider,
-            ),
-          ),
-        );
+        Navigator.of(context).pushNamed(RouteConstants.alerts);
       },
       borderRadius: AppSpacing.roundedMd,
       child: Container(

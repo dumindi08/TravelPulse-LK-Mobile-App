@@ -9,6 +9,9 @@ import '../../modules/nisal/providers/journey_provider.dart';
 import '../../modules/dumindi/providers/report_provider.dart';
 import '../../modules/dumindi/views/create_report_view.dart';
 import '../../modules/suneth/providers/crowd_provider.dart';
+import '../../modules/thimaya/providers/map_provider.dart';
+import '../../modules/thimaya/providers/alert_provider.dart';
+import '../../modules/thimaya/views/live_map_view.dart';
 import '../../modules/nisal/views/home_view.dart';
 import '../../modules/nisal/views/route_search_view.dart';
 import '../../modules/nisal/views/profile_view.dart';
@@ -22,6 +25,8 @@ class BottomNavScaffold extends StatefulWidget {
   final JourneyProvider? journeyProvider;
   final ReportProvider? reportProvider;
   final CrowdProvider? crowdProvider;
+  final MapProvider? mapProvider;
+  final AlertProvider? alertProvider;
   final int initialIndex;
 
   const BottomNavScaffold({
@@ -31,6 +36,8 @@ class BottomNavScaffold extends StatefulWidget {
     this.journeyProvider,
     this.reportProvider,
     this.crowdProvider,
+    this.mapProvider,
+    this.alertProvider,
     this.initialIndex = 0,
   });
 
@@ -44,6 +51,8 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
   late final JourneyProvider _journeyProvider;
   late final ReportProvider _reportProvider;
   late final CrowdProvider _crowdProvider;
+  late final MapProvider _mapProvider;
+  late final AlertProvider _alertProvider;
 
   @override
   void initState() {
@@ -53,6 +62,8 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
     _journeyProvider = widget.journeyProvider ?? JourneyProvider();
     _reportProvider = widget.reportProvider ?? ReportProvider();
     _crowdProvider = widget.crowdProvider ?? CrowdProvider();
+    _mapProvider = widget.mapProvider ?? MapProvider();
+    _alertProvider = widget.alertProvider ?? AlertProvider();
   }
 
   void _onItemTapped(int index) {
@@ -161,8 +172,13 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
             authProvider: widget.authProvider,
           ),
 
-          // 2. Map & Alerts Tab Shell (Thimaya — Stage 6)
-          const _MapTabShell(),
+          // 2. Interactive Live Map (Thimaya — Stage 6)
+          LiveMapView(
+            mapProvider: _mapProvider,
+            alertProvider: _alertProvider,
+            reportProvider: _reportProvider,
+            crowdProvider: _crowdProvider,
+          ),
 
           // 3. Profile Tab View (Nisal)
           ProfileView(
