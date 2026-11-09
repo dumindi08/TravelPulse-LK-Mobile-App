@@ -7,6 +7,7 @@ import 'modules/nisal/providers/auth_provider.dart';
 import 'modules/nisal/providers/route_provider.dart';
 import 'modules/nisal/providers/journey_provider.dart';
 import 'modules/dumindi/providers/report_provider.dart';
+import 'modules/suneth/providers/crowd_provider.dart';
 
 /// TravelPulse LK — Root Application Widget
 class TravelPulseApp extends StatelessWidget {
@@ -14,6 +15,7 @@ class TravelPulseApp extends StatelessWidget {
   final RouteProvider? routeProvider;
   final JourneyProvider? journeyProvider;
   final ReportProvider? reportProvider;
+  final CrowdProvider? crowdProvider;
 
   const TravelPulseApp({
     super.key,
@@ -21,6 +23,7 @@ class TravelPulseApp extends StatelessWidget {
     this.routeProvider,
     this.journeyProvider,
     this.reportProvider,
+    this.crowdProvider,
   });
 
   @override
@@ -30,6 +33,7 @@ class TravelPulseApp extends StatelessWidget {
       routeProvider: routeProvider,
       journeyProvider: journeyProvider,
       reportProvider: reportProvider,
+      crowdProvider: crowdProvider,
     );
 
     return ListenableBuilder(

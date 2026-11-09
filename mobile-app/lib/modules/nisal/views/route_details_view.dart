@@ -13,6 +13,8 @@ import '../models/schedule_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/route_provider.dart';
 import '../providers/journey_provider.dart';
+import '../../suneth/providers/crowd_provider.dart';
+import '../../suneth/widgets/submit_crowd_bottom_sheet.dart';
 
 /// TravelPulse LK — Route Details Screen (Nisal)
 /// Comprehensive route overview including ordered stop sequences,
@@ -22,6 +24,7 @@ class RouteDetailsView extends StatefulWidget {
   final RouteProvider routeProvider;
   final JourneyProvider journeyProvider;
   final AuthProvider authProvider;
+  final CrowdProvider? crowdProvider;
 
   const RouteDetailsView({
     super.key,
@@ -29,6 +32,7 @@ class RouteDetailsView extends StatefulWidget {
     required this.routeProvider,
     required this.journeyProvider,
     required this.authProvider,
+    this.crowdProvider,
   });
 
   @override
@@ -275,9 +279,34 @@ class _RouteDetailsViewState extends State<RouteDetailsView> with SingleTickerPr
                       _buildDisruptionBanner(route.activeDisruptionSummary!),
                     ],
                     const SizedBox(height: 8),
-                    CrowdMeterBadge(
-                      crowdLevel: route.currentCrowdLevel ?? 'moderate',
-                      isDetailed: true,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CrowdMeterBadge(
+                            crowdLevel: widget.crowdProvider?.getCrowdLevelForRoute(route.id) ??
+                                route.currentCrowdLevel ??
+                                'moderate',
+                            isDetailed: true,
+                          ),
+                        ),
+                        if (widget.crowdProvider != null) ...[
+                          const SizedBox(width: 8),
+                          IconButton.filledTonal(
+                            icon: const Icon(Icons.add_reaction_outlined, color: AppColors.primary),
+                            tooltip: 'Report Live Crowd',
+                            onPressed: () {
+                              final uid = widget.authProvider.currentUser?.id ?? 1;
+                              SubmitCrowdBottomSheet.show(
+                                context,
+                                initialRouteId: route.id,
+                                initialRouteNumber: route.routeNumber,
+                                userId: uid,
+                                crowdProvider: widget.crowdProvider!,
+                              );
+                            },
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),

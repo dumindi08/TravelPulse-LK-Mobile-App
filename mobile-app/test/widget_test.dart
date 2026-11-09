@@ -9,9 +9,13 @@ import 'package:travelpulse_mobile/modules/dumindi/models/community_report_model
 import 'package:travelpulse_mobile/modules/dumindi/services/report_service.dart';
 import 'package:travelpulse_mobile/modules/nisal/models/schedule_model.dart';
 import 'package:travelpulse_mobile/modules/nisal/services/route_service.dart';
+import 'package:travelpulse_mobile/modules/suneth/models/crowd_estimate_model.dart';
+import 'package:travelpulse_mobile/modules/suneth/models/user_reputation_model.dart';
+import 'package:travelpulse_mobile/modules/suneth/services/crowd_service.dart';
+import 'package:travelpulse_mobile/modules/suneth/providers/crowd_provider.dart';
 
 void main() {
-  group('TravelPulse LK — Full Mobile Test Suite (Stages 2, 3 & 4)', () {
+  group('TravelPulse LK — Full Mobile Test Suite (Stages 2, 3, 4 & 5)', () {
     testWidgets('1. Onboarding & Welcome screen smoke test', (WidgetTester tester) async {
       final authProvider = AuthProvider();
       final routeProvider = RouteProvider();
@@ -217,6 +221,111 @@ void main() {
       expect(reconstructed.id, equals(301));
       expect(reconstructed.displayReporter, equals('Anonymous Commuter'));
       expect(reconstructed.disruptionReason, equals('Signal Failure'));
+    });
+
+    test('10. CrowdAggregationModel and CrowdEstimateModel serialization & dual-target logic (Suneth)', () {
+      // 10a. Route aggregation
+      final routeAgg = CrowdAggregationModel(
+        targetType: 'route',
+        targetId: 1,
+        targetName: 'Route 138 (Pettah - Homagama)',
+        currentCrowdLevel: 'very_crowded',
+        sampleCount: 8,
+        confidenceScore: 88.5,
+        averageWaitTimeMinutes: 18,
+        timeSlot: DateTime.now(),
+      );
+      expect(routeAgg.isRoute, isTrue);
+      expect(routeAgg.isStop, isFalse);
+
+      final routeJson = routeAgg.toJson();
+      final routeParsed = CrowdAggregationModel.fromJson(routeJson);
+      expect(routeParsed.targetId, equals(1));
+      expect(routeParsed.currentCrowdLevel, equals('very_crowded'));
+      expect(routeParsed.confidenceScore, equals(88.5));
+
+      // 10b. Stop aggregation
+      final stopAgg = CrowdAggregationModel(
+        targetType: 'stop',
+        targetId: 101,
+        targetName: 'Pettah Main Bus Stand',
+        currentCrowdLevel: 'crowded',
+        sampleCount: 9,
+        confidenceScore: 91.0,
+        averageWaitTimeMinutes: 20,
+        timeSlot: DateTime.now(),
+      );
+      expect(stopAgg.isStop, isTrue);
+      expect(stopAgg.isRoute, isFalse);
+    });
+
+    test('11. UserReputationModel trust tier calculations and accuracy rates (Suneth)', () {
+      final highRep = UserReputationModel(
+        userId: 1,
+        reputationScore: 88.0,
+        totalReportsSubmitted: 10,
+        verifiedReportsCount: 9,
+        rejectedReportsCount: 0,
+        totalVotesCast: 25,
+        updatedAt: DateTime.now(),
+      );
+      expect(highRep.trustTier, equals('Trusted Commuter'));
+      expect(highRep.accuracyRate, equals(90.0));
+
+      final pioneerRep = UserReputationModel(
+        userId: 5,
+        reputationScore: 98.0,
+        totalReportsSubmitted: 20,
+        verifiedReportsCount: 20,
+        rejectedReportsCount: 0,
+        totalVotesCast: 50,
+        updatedAt: DateTime.now(),
+      );
+      expect(pioneerRep.trustTier, equals('Elite Contributor'));
+      expect(pioneerRep.accuracyRate, equals(100.0));
+
+      final newRep = UserReputationModel.initial(99);
+      expect(newRep.trustTier, equals('New Commuter'));
+      expect(newRep.reputationScore, equals(10.0));
+    });
+
+    test('12. CrowdService & CrowdProvider aggregation loading and estimate submission (Suneth)', () async {
+      final service = CrowdService();
+      final provider = CrowdProvider(service: service);
+
+      await provider.loadAggregations();
+      expect(provider.aggregations.isNotEmpty, isTrue);
+      expect(provider.routeAggregations.isNotEmpty, isTrue);
+      expect(provider.stopAggregations.isNotEmpty, isTrue);
+
+      final level138 = provider.getCrowdLevelForRoute(1);
+      expect(level138, isNotEmpty);
+
+      // Submit observation for Route 100
+      final submitted = await provider.submitCrowdEstimate(
+        routeId: 2,
+        crowdLevel: 'crowded',
+        passengerWaitTimeMinutes: 12,
+        userId: 1,
+      );
+      expect(submitted, isTrue);
+      expect(provider.getCrowdLevelForRoute(2), equals('crowded'));
+    });
+
+    test('13. CrowdProvider peer voting updates report reliability score (Suneth)', () async {
+      final provider = CrowdProvider();
+
+      final voteResult = await provider.voteOnReport(
+        reportId: 101,
+        userId: 2,
+        voteType: 'upvote',
+      );
+
+      expect(voteResult, isNotNull);
+      expect(voteResult!['reportId'], equals(101));
+      expect(voteResult['userVote'], equals('upvote'));
+      expect(voteResult['reliabilityScore'], greaterThanOrEqualTo(80.0));
+      expect(voteResult['confidenceStatus'], equals('verified'));
     });
   });
 }

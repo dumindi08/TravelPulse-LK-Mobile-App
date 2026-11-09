@@ -19,6 +19,8 @@ const {
 
 const { requireAuth, optionalAuth } = require('../middleware/auth.middleware');
 const { validateCreateReport, validateUpdateReport } = require('../validators/report.validator');
+const { voteOnReport } = require('../controllers/crowd.controller');
+const { validateReportVote } = require('../validators/crowd.validator');
 
 // 1. Master Categories Taxonomy (Public)
 router.get('/categories', getCategories);
@@ -40,6 +42,9 @@ router.patch('/:id', requireAuth, validateUpdateReport, updateReport);
 
 // 7. Delete Report (Protected — Strictly Author or Moderator)
 router.delete('/:id', requireAuth, deleteReport);
+
+// 8. Peer Verification Voting on Report (Protected — Commuter)
+router.post('/:id/vote', requireAuth, validateReportVote, voteOnReport);
 
 module.exports = router;
 

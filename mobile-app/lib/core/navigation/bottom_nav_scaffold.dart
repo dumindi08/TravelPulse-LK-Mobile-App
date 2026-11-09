@@ -8,6 +8,7 @@ import '../../modules/nisal/providers/route_provider.dart';
 import '../../modules/nisal/providers/journey_provider.dart';
 import '../../modules/dumindi/providers/report_provider.dart';
 import '../../modules/dumindi/views/create_report_view.dart';
+import '../../modules/suneth/providers/crowd_provider.dart';
 import '../../modules/nisal/views/home_view.dart';
 import '../../modules/nisal/views/route_search_view.dart';
 import '../../modules/nisal/views/profile_view.dart';
@@ -20,6 +21,7 @@ class BottomNavScaffold extends StatefulWidget {
   final RouteProvider? routeProvider;
   final JourneyProvider? journeyProvider;
   final ReportProvider? reportProvider;
+  final CrowdProvider? crowdProvider;
   final int initialIndex;
 
   const BottomNavScaffold({
@@ -28,6 +30,7 @@ class BottomNavScaffold extends StatefulWidget {
     this.routeProvider,
     this.journeyProvider,
     this.reportProvider,
+    this.crowdProvider,
     this.initialIndex = 0,
   });
 
@@ -40,6 +43,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
   late final RouteProvider _routeProvider;
   late final JourneyProvider _journeyProvider;
   late final ReportProvider _reportProvider;
+  late final CrowdProvider _crowdProvider;
 
   @override
   void initState() {
@@ -48,6 +52,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
     _routeProvider = widget.routeProvider ?? RouteProvider();
     _journeyProvider = widget.journeyProvider ?? JourneyProvider();
     _reportProvider = widget.reportProvider ?? ReportProvider();
+    _crowdProvider = widget.crowdProvider ?? CrowdProvider();
   }
 
   void _onItemTapped(int index) {
@@ -163,6 +168,7 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
           ProfileView(
             authProvider: widget.authProvider,
             reportProvider: _reportProvider,
+            crowdProvider: _crowdProvider,
           ),
         ],
       ),

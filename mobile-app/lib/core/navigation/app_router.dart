@@ -5,6 +5,8 @@ import '../../modules/nisal/providers/route_provider.dart';
 import '../../modules/nisal/providers/journey_provider.dart';
 import '../../modules/dumindi/providers/report_provider.dart';
 import '../../modules/dumindi/models/community_report_model.dart';
+import '../../modules/suneth/providers/crowd_provider.dart';
+import '../../modules/suneth/views/crowd_status_view.dart';
 import '../../modules/dumindi/views/create_report_view.dart';
 import '../../modules/dumindi/views/report_submitted_view.dart';
 import '../../modules/dumindi/views/recent_reports_view.dart';
@@ -25,15 +27,18 @@ class AppRouter {
   final RouteProvider routeProvider;
   final JourneyProvider journeyProvider;
   final ReportProvider reportProvider;
+  final CrowdProvider crowdProvider;
 
   AppRouter({
     required this.authProvider,
     RouteProvider? routeProvider,
     JourneyProvider? journeyProvider,
     ReportProvider? reportProvider,
+    CrowdProvider? crowdProvider,
   })  : routeProvider = routeProvider ?? RouteProvider(),
         journeyProvider = journeyProvider ?? JourneyProvider(),
-        reportProvider = reportProvider ?? ReportProvider();
+        reportProvider = reportProvider ?? ReportProvider(),
+        crowdProvider = crowdProvider ?? CrowdProvider();
 
   Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -66,6 +71,7 @@ class AppRouter {
             routeProvider: routeProvider,
             journeyProvider: journeyProvider,
             reportProvider: reportProvider,
+            crowdProvider: crowdProvider,
             initialIndex: initialIndex,
           ),
         );
@@ -103,6 +109,18 @@ class AppRouter {
             routeProvider: routeProvider,
             journeyProvider: journeyProvider,
             authProvider: authProvider,
+            crowdProvider: crowdProvider,
+          ),
+        );
+
+      // 4. Crowd Intelligence & Report Reliability (Suneth)
+      case RouteConstants.crowdStatus:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => CrowdStatusView(
+            crowdProvider: crowdProvider,
+            authProvider: authProvider,
+            routeProvider: routeProvider,
           ),
         );
 

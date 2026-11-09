@@ -5,6 +5,7 @@
 
 const express = require('express');
 const reportRoutes = require('./routes/report.routes');
+const crowdRoutes = require('./routes/crowd.routes');
 
 const app = express();
 
@@ -35,6 +36,9 @@ app.get('/health', (req, res) => {
 
 // Module 2 Routes (Dumindi)
 app.use('/api/v1/reports', reportRoutes);
+
+// Module 3 Routes (Suneth)
+app.use('/api/v1/crowd', crowdRoutes);
 
 // Fallback for undefined routes
 app.use((req, res) => {

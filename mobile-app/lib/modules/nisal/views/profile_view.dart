@@ -11,17 +11,22 @@ import '../providers/auth_provider.dart';
 import '../../dumindi/providers/report_provider.dart';
 import '../../dumindi/views/my_reports_view.dart';
 import '../../dumindi/views/recent_reports_view.dart';
+import '../../suneth/providers/crowd_provider.dart';
+import '../../suneth/models/user_reputation_model.dart';
+import '../../suneth/widgets/reputation_badge_card.dart';
 
 /// TravelPulse LK — Profile & Account Management Screen (Nisal)
 /// Handles commuter profile inspection, role badge, session status, and logout.
 class ProfileView extends StatelessWidget {
   final AuthProvider authProvider;
   final ReportProvider? reportProvider;
+  final CrowdProvider? crowdProvider;
 
   const ProfileView({
     super.key,
     required this.authProvider,
     this.reportProvider,
+    this.crowdProvider,
   });
 
   Future<void> _handleLogout(BuildContext context) async {
@@ -171,6 +176,23 @@ class ProfileView extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+              ],
+
+              // Commuter Credibility & Trust Card (Suneth Engine)
+              if (!isGuest && user != null) ...[
+                ReputationBadgeCard(
+                  reputation: crowdProvider?.userReputation ??
+                      UserReputationModel(
+                        userId: user.id,
+                        reputationScore: user.isModerator ? 98.0 : 82.5,
+                        totalReportsSubmitted: user.isModerator ? 20 : 6,
+                        verifiedReportsCount: user.isModerator ? 19 : 5,
+                        rejectedReportsCount: 0,
+                        totalVotesCast: user.isModerator ? 45 : 14,
+                        updatedAt: DateTime.now(),
+                      ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
               ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/route_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -327,9 +328,7 @@ class HomeView extends StatelessWidget {
                 icon: Icons.groups_rounded,
                 color: const Color(0xFF4F46E5),
                 onTap: () {
-                  // Switch to search and filter by crowded routes
-                  routeProvider.setSearchQuery('');
-                  onSearchTapped();
+                  Navigator.of(context).pushNamed(RouteConstants.crowdStatus);
                 },
               ),
             ),
