@@ -1,0 +1,77 @@
+version: '3.8'
+
+# ==============================================================================
+# TravelPulse LK — Multi-Container Orchestration (Docker Compose)
+# Group 10 (SE5104 Mini Project)
+# Services:
+#   1. mysql:   MySQL 8.0 with automatic schema & seed initialization
+#   2. backend: Express.js REST API service with crowd intelligence engine
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. MySQL 8.0 Database Service
+  # ----------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: travelpulse-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: travelpulse_root_pass
+      MYSQL_DATABASE: travelpulse_lk
+      MYSQL_USER: travelpulse
+      MYSQL_PASSWORD: travelpulse_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Auto-run SQL scripts in alphabetical order upon initial database creation
+      - ./database/schema/full_schema.sql:/docker-entrypoint-initdb.d/01_full_schema.sql:ro
+      - ./database/seeds/01_nisal_user_transport_seeds.sql:/docker-entrypoint-initdb.d/02_nisal_seeds.sql:ro
+      - ./database/seeds/02_dumindi_community_reports_seeds.sql:/docker-entrypoint-initdb.d/03_dumindi_seeds.sql:ro
+      - ./database/seeds/03_suneth_crowd_reliability_seeds.sql:/docker-entrypoint-initdb.d/04_suneth_seeds.sql:ro
+      - ./database/seeds/04_thimaya_road_alerts_seeds.sql:/docker-entrypoint-initdb.d/05_thimaya_seeds.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "travelpulse", "-ptravelpulse_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - travelpulse-net
+
+  # ----------------------------------------------------------------------------
+  # 2. Node.js Express Backend Service
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: travelpulse-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: travelpulse
+      DB_PASSWORD: travelpulse_pass
+      DB_NAME: travelpulse_lk
+      JWT_SECRET: travelpulse_group10_super_secret_jwt_key_2026
+      JWT_EXPIRES_IN: 7d
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - travelpulse-net
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  travelpulse-net:
+    driver: bridge
+

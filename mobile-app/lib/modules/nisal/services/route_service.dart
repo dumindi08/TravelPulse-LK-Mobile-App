@@ -1,16 +1,16 @@
 import 'dart:async';
 import '../../../core/models/api_response.dart';
+import '../../../core/services/api_service.dart';
 import '../models/route_model.dart';
 import '../models/stop_model.dart';
 import '../models/schedule_model.dart';
 
 /// TravelPulse LK — Transit Route & Schedule Service (Nisal)
-/// ---------------------------------------------------------------------------
-/// [TEMPORARY MOCK REPOSITORY — FOR OFFLINE DEVELOPMENT & TESTING]
-/// Provides authentic Sri Lankan transit master data matching the MySQL database seeds.
-/// Will connect to GET /api/v1/routes and GET /api/v1/routes/:id when backend is online.
-/// ---------------------------------------------------------------------------
+/// Connects to Express backend (/api/v1/routes) with authentic offline fallback.
 class RouteService {
+  final ApiService _api;
+
+  RouteService({ApiService? api}) : _api = api ?? ApiService();
   // Preloaded authentic Sri Lankan public transit routes
   static final List<RouteModel> _routes = [
     RouteModel(
@@ -540,8 +540,31 @@ class RouteService {
     String? searchQuery,
     String? transportType,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    // 1. Attempt live HTTP query against backend (/api/v1/routes)
+    final query = <String, String>{};
+    if (transportType != null && transportType.isNotEmpty && transportType.toLowerCase() != 'all') {
+      query['transportType'] = transportType;
+    }
+    if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+      query['origin'] = searchQuery.trim();
+    }
 
+    final apiRes = await _api.get<List<RouteModel>>(
+      '/routes',
+      queryParams: query.isNotEmpty ? query : null,
+      fromJsonT: (json) {
+        if (json is List) {
+          return json.map((item) => RouteModel.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+        }
+        return <RouteModel>[];
+      },
+    );
+
+    if (apiRes.isSuccess && apiRes.data != null && apiRes.data!.isNotEmpty) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback simulation
     var filtered = List<RouteModel>.from(_routes);
 
     if (transportType != null && transportType.isNotEmpty && transportType.toLowerCase() != 'all') {
@@ -559,7 +582,7 @@ class RouteService {
     }
 
     return ApiResponse.success(
-      message: 'Routes retrieved successfully',
+      message: 'Routes retrieved successfully (Offline mode)',
       data: filtered,
     );
   }
@@ -570,8 +593,31 @@ class RouteService {
     required String destination,
     String? transportType,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    // 1. Attempt live HTTP query against backend (/api/v1/routes)
+    final query = <String, String>{
+      'origin': origin.trim(),
+      'destination': destination.trim(),
+    };
+    if (transportType != null && transportType.isNotEmpty && transportType.toLowerCase() != 'all') {
+      query['transportType'] = transportType;
+    }
 
+    final apiRes = await _api.get<List<RouteModel>>(
+      '/routes',
+      queryParams: query,
+      fromJsonT: (json) {
+        if (json is List) {
+          return json.map((item) => RouteModel.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+        }
+        return <RouteModel>[];
+      },
+    );
+
+    if (apiRes.isSuccess && apiRes.data != null && apiRes.data!.isNotEmpty) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback simulation
     final orig = origin.trim().toLowerCase();
     final dest = destination.trim().toLowerCase();
 
@@ -612,15 +658,24 @@ class RouteService {
     }
 
     return ApiResponse.success(
-      message: 'Found ${matched.length} routes matching query',
+      message: 'Found ${matched.length} routes matching query (Offline mode)',
       data: matched,
     );
   }
 
   /// Get detailed route by ID including ordered stops and timetable
   Future<ApiResponse<RouteModel>> getRouteById(int id) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    // 1. Attempt live HTTP query
+    final apiRes = await _api.get<RouteModel>(
+      '/routes/$id',
+      fromJsonT: (json) => RouteModel.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
 
+    if (apiRes.isSuccess && apiRes.data != null) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback simulation
     final route = _routes.firstWhere(
       (r) => r.id == id,
       orElse: () => RouteModel(
@@ -642,7 +697,7 @@ class RouteService {
     }
 
     return ApiResponse.success(
-      message: 'Route details loaded',
+      message: 'Route details loaded (Offline mode)',
       data: route,
     );
   }
@@ -653,11 +708,42 @@ class RouteService {
     String? direction,
     String? dayOfWeek,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    // 1. Attempt live HTTP query
+    final query = <String, String>{};
+    if (direction != null && direction.isNotEmpty) query['direction'] = direction;
+    if (dayOfWeek != null && dayOfWeek.isNotEmpty) query['dayOfWeek'] = dayOfWeek;
 
+    final apiRes = await _api.get<List<RouteScheduleModel>>(
+      '/routes/$routeId/schedules',
+      queryParams: query.isNotEmpty ? query : null,
+      fromJsonT: (json) {
+        if (json is List) {
+          return json.map((item) => RouteScheduleModel.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+        }
+        return <RouteScheduleModel>[];
+      },
+    );
+
+    if (apiRes.isSuccess && apiRes.data != null && apiRes.data!.isNotEmpty) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback simulation
     var list = _schedules.where((s) => s.routeId == routeId && s.isActive).toList();
 
     if (direction != null && direction.isNotEmpty && direction != 'all') {
+      list = list.where((s) => s.tripDirection.toLowerCase() == direction.toLowerCase()).toList();
+    }
+
+    if (dayOfWeek != null && dayOfWeek.isNotEmpty && dayOfWeek != 'all') {
+      list = list.where((s) => s.dayOfWeek == 'all' || s.dayOfWeek.toLowerCase() == dayOfWeek.toLowerCase()).toList();
+    }
+
+    return ApiResponse.success(
+      message: 'Schedules loaded (Offline mode)',
+      data: list,
+    );
+  }
       list = list.where((s) => s.tripDirection.toLowerCase() == direction.toLowerCase()).toList();
     }
 

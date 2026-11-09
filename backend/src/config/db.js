@@ -1203,7 +1203,33 @@ class MemoryStore {
 
 const memoryStore = new MemoryStore();
 
+// Live MySQL 8.0+ Connection Pool (Optional — Activated when DB_HOST is set)
+let pool = null;
+
+if (process.env.DB_HOST) {
+  try {
+    const mysql = require('mysql2/promise');
+    pool = mysql.createPool({
+      host: process.env.DB_HOST || 'localhost',
+      port: Number(process.env.DB_PORT) || 3306,
+      user: process.env.DB_USER || 'travelpulse',
+      password: process.env.DB_PASSWORD || 'travelpulse_pass',
+      database: process.env.DB_NAME || 'travelpulse_lk',
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 0,
+    });
+    console.log(`[DB] MySQL pool initialized: ${process.env.DB_HOST}:${process.env.DB_PORT || 3306}/${process.env.DB_NAME || 'travelpulse_lk'}`);
+  } catch (err) {
+    console.warn(`[DB] mysql2 driver not available or failed to connect (${err.message}). Using MemoryStore.`);
+  }
+}
+
 module.exports = {
   memoryStore,
-  isLiveDb: false,
+  pool,
+  isLiveDb: Boolean(pool),
+  getPool: () => pool,
 };

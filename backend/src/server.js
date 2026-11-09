@@ -2,6 +2,10 @@
  * TravelPulse LK — Backend HTTP Server Bootstrap
  */
 
+try {
+  require('dotenv').config();
+} catch (_) {}
+
 const app = require('./app');
 
 const PORT = process.env.PORT || 5000;

@@ -1,17 +1,18 @@
 import 'dart:async';
 import '../../../core/models/api_response.dart';
+import '../../../core/services/api_service.dart';
 import '../models/journey_model.dart';
 import '../models/route_model.dart';
 import '../models/stop_model.dart';
 
 /// TravelPulse LK — Commuter Journey Service (Nisal)
-/// ---------------------------------------------------------------------------
-/// [TEMPORARY MOCK REPOSITORY — FOR OFFLINE DEVELOPMENT & TESTING]
-/// Aligns with MySQL `user_journeys` table in 01_nisal_user_transport_schema.sql.
-/// Connects to POST /api/v1/journeys and GET /api/v1/journeys when backend is online.
-/// ---------------------------------------------------------------------------
+/// Connects to Express backend (/api/v1/journeys) with authentic offline fallback.
 class JourneyService {
-  // In-memory collection of commuter journeys
+  final ApiService _api;
+
+  JourneyService({ApiService? api}) : _api = api ?? ApiService();
+
+  // In-memory collection of commuter journeys for offline fallback
   static final List<JourneyModel> _journeys = [
     JourneyModel(
       id: 501,
@@ -33,8 +34,22 @@ class JourneyService {
 
   /// Retrieve journeys for a specific user, or all active journeys
   Future<ApiResponse<List<JourneyModel>>> getJourneys({int? userId}) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    // 1. Attempt live HTTP query
+    final apiRes = await _api.get<List<JourneyModel>>(
+      '/journeys',
+      fromJsonT: (json) {
+        if (json is List) {
+          return json.map((item) => JourneyModel.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+        }
+        return <JourneyModel>[];
+      },
+    );
 
+    if (apiRes.isSuccess && apiRes.data != null && apiRes.data!.isNotEmpty) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback simulation
     var results = List<JourneyModel>.from(_journeys);
     if (userId != null && userId > 0) {
       results = results.where((j) => j.userId == userId).toList();
@@ -44,14 +59,21 @@ class JourneyService {
     results.sort((a, b) => b.startTime.compareTo(a.startTime));
 
     return ApiResponse.success(
-      message: 'Journeys retrieved successfully',
+      message: 'Journeys retrieved successfully (Offline mode)',
       data: results,
     );
   }
 
   /// Get the active in-progress journey for a user
   Future<ApiResponse<JourneyModel?>> getActiveJourney({int? userId}) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    final journeysRes = await getJourneys(userId: userId);
+    if (journeysRes.isSuccess && journeysRes.data != null) {
+      final active = journeysRes.data!.where((j) => j.status == 'in_progress').toList();
+      return ApiResponse.success(
+        message: 'Active journey status checked',
+        data: active.isNotEmpty ? active.first : null,
+      );
+    }
 
     final matches = _journeys.where((j) {
       final isUserMatch = (userId == null || userId == 0) || j.userId == userId;
@@ -59,7 +81,7 @@ class JourneyService {
     }).toList();
 
     return ApiResponse.success(
-      message: 'Active journey status checked',
+      message: 'Active journey status checked (Offline mode)',
       data: matches.isNotEmpty ? matches.first : null,
     );
   }
@@ -72,8 +94,22 @@ class JourneyService {
     required RouteStopSequenceModel destinationStop,
     bool startImmediately = true,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    // 1. Attempt live HTTP call
+    final apiRes = await _api.post<JourneyModel>(
+      '/journeys',
+      body: {
+        'routeId': route.id,
+        'originStopId': originStop.stopId,
+        'destinationStopId': destinationStop.stopId,
+      },
+      fromJsonT: (json) => JourneyModel.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
 
+    if (apiRes.isSuccess && apiRes.data != null) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback simulation
     final newJourney = JourneyModel(
       id: _nextJourneyId++,
       userId: userId,
@@ -113,15 +149,26 @@ class JourneyService {
     _journeys.insert(0, newJourney);
 
     return ApiResponse.success(
-      message: startImmediately ? 'Journey started' : 'Journey planned',
+      message: startImmediately ? 'Journey started (Offline mode)' : 'Journey planned (Offline mode)',
       data: newJourney,
     );
   }
 
   /// Update journey status ('in_progress', 'completed', 'cancelled')
   Future<ApiResponse<JourneyModel>> updateJourneyStatus(int journeyId, String status) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    // 1. Attempt live HTTP patch if completing
+    if (status == 'completed') {
+      final apiRes = await _api.patch<JourneyModel>(
+        '/journeys/$journeyId/complete',
+        fromJsonT: (json) => JourneyModel.fromJson(Map<String, dynamic>.from(json as Map)),
+      );
 
+      if (apiRes.isSuccess && apiRes.data != null) {
+        return apiRes;
+      }
+    }
+
+    // 2. Offline fallback simulation
     final index = _journeys.indexWhere((j) => j.id == journeyId);
     if (index == -1) {
       return ApiResponse.failure(
@@ -150,7 +197,7 @@ class JourneyService {
     _journeys[index] = updated;
 
     return ApiResponse.success(
-      message: 'Journey status updated to $status',
+      message: 'Journey status updated to $status (Offline mode)',
       data: updated,
     );
   }

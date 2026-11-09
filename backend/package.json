@@ -1,17 +1,28 @@
 {
   "name": "travelpulse-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "TravelPulse LK Backend API (Express.js & MySQL)",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/*.test.js",
+    "test:unit": "node --test tests/report.test.js tests/crowd.test.js tests/alerts.test.js",
+    "test:integration": "node --test tests/integration.test.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "travelpulse",
+    "transit",
+    "sri-lanka",
+    "crowdsourcing",
+    "express"
+  ],
+  "author": "Group 10 (SE5104)",
   "license": "ISC",
-  "type": "commonjs",
-  "private": "true",
+  "private": true,
   "dependencies": {
-    "express": "^5.3.0"
+    "express": "^5.3.0",
+    "mysql2": "^3.9.0",
+    "dotenv": "^16.4.5"
   }
 }

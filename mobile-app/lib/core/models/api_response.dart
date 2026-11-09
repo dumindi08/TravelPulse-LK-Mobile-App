@@ -8,6 +8,10 @@ class ApiResponse<T> {
   final Map<String, dynamic>? meta;
   final ApiError? error;
 
+  bool get isSuccess => success;
+  bool get isFailure => !success;
+  String? get code => error?.code;
+
   ApiResponse({
     required this.success,
     required this.statusCode,

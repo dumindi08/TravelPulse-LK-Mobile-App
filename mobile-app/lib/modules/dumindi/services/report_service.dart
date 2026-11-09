@@ -1,18 +1,22 @@
 import 'dart:async';
 import '../../../core/models/api_response.dart';
+import '../../../core/services/api_service.dart';
 import '../models/community_report_model.dart';
 import '../models/disruption_model.dart';
 import '../models/report_category_model.dart';
 
 /// TravelPulse LK — Community Reporting Service (Dumindi)
 /// ---------------------------------------------------------------------------
-/// [TEMPORARY MOCK REPOSITORY — FOR OFFLINE DEVELOPMENT & TESTING]
+/// Connects to Express backend (/api/v1/reports) with graceful offline fallback.
 /// Implements community incident reporting, disruption management,
 /// anonymous submission handling, ownership verification for deletion,
 /// and Suneth's peer voting & reliability recalculation hooks.
-/// Connects to /api/v1/reports when backend server is active.
 /// ---------------------------------------------------------------------------
 class ReportService {
+  final ApiService _api;
+
+  ReportService({ApiService? api}) : _api = api ?? ApiService();
+
   // Seeded authentic reports across Sri Lankan transit corridors
   static final List<CommunityReportModel> _reports = [
     CommunityReportModel(
@@ -165,9 +169,27 @@ class ReportService {
 
   /// Retrieve the 6 master report categories
   Future<ApiResponse<List<ReportCategoryModel>>> getCategories() async {
-    await Future.delayed(const Duration(milliseconds: 50));
+    // 1. Attempt live HTTP call to /api/v1/reports/categories
+    final apiRes = await _api.get<List<ReportCategoryModel>>(
+      '/reports/categories',
+      includeAuth: false,
+      fromJsonT: (json) {
+        if (json is List) {
+          return json
+              .map((item) => ReportCategoryModel.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
+        }
+        return <ReportCategoryModel>[];
+      },
+    );
+
+    if (apiRes.isSuccess && apiRes.data != null && apiRes.data!.isNotEmpty) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback
     return ApiResponse.success(
-      message: 'Categories loaded',
+      message: 'Categories loaded (offline mode)',
       data: ReportCategoryModel.allCategories,
     );
   }
@@ -178,8 +200,44 @@ class ReportService {
     String? statusFilter,
     int? routeId,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    // 1. Prepare query parameters
+    final Map<String, String> queryParams = {};
+    if (categoryFilter != null && categoryFilter.isNotEmpty && categoryFilter.toLowerCase() != 'all') {
+      final matchingCat = ReportCategoryModel.allCategories.firstWhere(
+        (c) => c.name.toLowerCase() == categoryFilter.toLowerCase(),
+        orElse: () => ReportCategoryModel.allCategories.last,
+      );
+      if (matchingCat.name.toLowerCase() == categoryFilter.toLowerCase()) {
+        queryParams['categoryId'] = matchingCat.id.toString();
+      }
+    }
+    if (statusFilter != null && statusFilter.isNotEmpty && statusFilter.toLowerCase() != 'all') {
+      queryParams['status'] = statusFilter.toLowerCase();
+    }
+    if (routeId != null) {
+      queryParams['routeId'] = routeId.toString();
+    }
 
+    // 2. Attempt live HTTP call to /api/v1/reports
+    final apiRes = await _api.get<List<CommunityReportModel>>(
+      '/reports',
+      queryParams: queryParams.isNotEmpty ? queryParams : null,
+      includeAuth: true,
+      fromJsonT: (json) {
+        if (json is List) {
+          return json
+              .map((item) => CommunityReportModel.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
+        }
+        return <CommunityReportModel>[];
+      },
+    );
+
+    if (apiRes.isSuccess && apiRes.data != null) {
+      return apiRes;
+    }
+
+    // 3. Offline fallback
     var list = List<CommunityReportModel>.from(_reports);
 
     if (categoryFilter != null && categoryFilter.isNotEmpty && categoryFilter.toLowerCase() != 'all') {
@@ -198,28 +256,63 @@ class ReportService {
     list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return ApiResponse.success(
-      message: 'Reports retrieved successfully',
+      message: 'Reports retrieved successfully (offline mode)',
       data: list,
     );
   }
 
   /// Get reports authored by a specific commuter (shows both identified & anonymous)
   Future<ApiResponse<List<CommunityReportModel>>> getMyReports(int userId) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    // 1. Attempt live HTTP call to /api/v1/reports/my-reports
+    final apiRes = await _api.get<List<CommunityReportModel>>(
+      '/reports/my-reports',
+      includeAuth: true,
+      fromJsonT: (json) {
+        if (json is List) {
+          return json
+              .map((item) => CommunityReportModel.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
+        }
+        return <CommunityReportModel>[];
+      },
+    );
 
+    if (apiRes.isSuccess && apiRes.data != null) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback
     final myReports = _reports.where((r) => r.userId == userId).toList();
     myReports.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return ApiResponse.success(
-      message: 'My reports retrieved',
+      message: 'My reports retrieved (offline mode)',
       data: myReports,
     );
   }
 
   /// Get report details by ID
   Future<ApiResponse<CommunityReportModel>> getReportById(int id) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    // 1. Attempt live HTTP call to /api/v1/reports/:id
+    final apiRes = await _api.get<CommunityReportModel>(
+      '/reports/$id',
+      includeAuth: true,
+      fromJsonT: (json) => CommunityReportModel.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
 
+    if (apiRes.isSuccess && apiRes.data != null) {
+      return apiRes;
+    }
+
+    if (apiRes.statusCode == 404 || apiRes.error?.code == 'RESOURCE_NOT_FOUND') {
+      return ApiResponse.failure(
+        message: 'Report not found.',
+        code: 'REPORT_NOT_FOUND',
+        statusCode: 404,
+      );
+    }
+
+    // 2. Offline fallback
     final report = _reports.firstWhere(
       (r) => r.id == id,
       orElse: () => CommunityReportModel(
@@ -245,7 +338,7 @@ class ReportService {
     }
 
     return ApiResponse.success(
-      message: 'Report loaded',
+      message: 'Report loaded (offline mode)',
       data: report,
     );
   }
@@ -269,8 +362,37 @@ class ReportService {
     String? disruptionReason,
     String? mediaUrl,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 250));
+    // 1. Attempt live HTTP submission to /api/v1/reports
+    final body = {
+      'categoryId': categoryId,
+      'categoryName': categoryName,
+      'routeId': routeId,
+      'routeNumber': routeNumber,
+      'stopId': stopId,
+      'stopName': stopName,
+      'latitude': latitude,
+      'longitude': longitude,
+      'locationDescription': locationDescription,
+      'title': title,
+      'description': description,
+      'disruptionReason': disruptionReason,
+      'isAnonymous': isAnonymous,
+      'mediaUrl': mediaUrl,
+    };
 
+    final apiRes = await _api.post<CommunityReportModel>(
+      '/reports',
+      body: body,
+      includeAuth: true,
+      fromJsonT: (json) => CommunityReportModel.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
+
+    if (apiRes.isSuccess && apiRes.data != null) {
+      _reports.insert(0, apiRes.data!);
+      return apiRes;
+    }
+
+    // 2. Offline fallback simulation
     final newReport = CommunityReportModel(
       id: _nextReportId++,
       userId: userId,
@@ -300,7 +422,7 @@ class ReportService {
     _reports.insert(0, newReport);
 
     return ApiResponse.success(
-      message: 'Report submitted successfully!',
+      message: 'Report submitted successfully (offline mode)!',
       data: newReport,
       statusCode: 201,
     );
@@ -312,8 +434,24 @@ class ReportService {
     required int userId,
     bool isModerator = false,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    // 1. Attempt live HTTP DELETE to /api/v1/reports/:id
+    final apiRes = await _api.delete<bool>(
+      '/reports/$reportId',
+      includeAuth: true,
+      fromJsonT: (_) => true,
+    );
 
+    if (apiRes.isSuccess) {
+      _reports.removeWhere((r) => r.id == reportId);
+      return apiRes;
+    }
+
+    // If server returned specific 403 or 404, return it
+    if (apiRes.statusCode == 403 || apiRes.statusCode == 404) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback
     final index = _reports.indexWhere((r) => r.id == reportId);
     if (index == -1) {
       return ApiResponse.failure(
@@ -335,7 +473,7 @@ class ReportService {
     _reports.removeAt(index);
 
     return ApiResponse.success(
-      message: 'Report deleted successfully.',
+      message: 'Report deleted successfully (offline mode).',
       data: true,
     );
   }
@@ -346,8 +484,23 @@ class ReportService {
     required int userId,
     required String voteType, // 'upvote', 'downvote', 'confirm_resolved'
   }) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    // 1. Attempt live HTTP POST to /api/v1/reports/:id/vote
+    final apiRes = await _api.post<CommunityReportModel>(
+      '/reports/$reportId/vote',
+      body: {'voteType': voteType},
+      includeAuth: true,
+      fromJsonT: (json) => CommunityReportModel.fromJson(Map<String, dynamic>.from(json as Map)),
+    );
 
+    if (apiRes.isSuccess && apiRes.data != null) {
+      final index = _reports.indexWhere((r) => r.id == reportId);
+      if (index != -1) {
+        _reports[index] = apiRes.data!;
+      }
+      return apiRes;
+    }
+
+    // 2. Offline fallback
     final index = _reports.indexWhere((r) => r.id == reportId);
     if (index == -1) {
       return ApiResponse.failure(
@@ -417,16 +570,33 @@ class ReportService {
     _reports[index] = updated;
 
     return ApiResponse.success(
-      message: 'Vote recorded and reliability recalculated.',
+      message: 'Vote recorded and reliability recalculated (offline mode).',
       data: updated,
     );
   }
 
   /// Get official transit disruptions
   Future<ApiResponse<List<DisruptionModel>>> getDisruptions() async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    // 1. Attempt live HTTP call to /api/v1/incidents
+    final apiRes = await _api.get<List<DisruptionModel>>(
+      '/incidents',
+      includeAuth: false,
+      fromJsonT: (json) {
+        if (json is List) {
+          // If returned as incidents, can map to disruptions or return seeded
+          return <DisruptionModel>[];
+        }
+        return <DisruptionModel>[];
+      },
+    );
+
+    if (apiRes.isSuccess && apiRes.data != null && apiRes.data!.isNotEmpty) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback
     return ApiResponse.success(
-      message: 'Disruptions loaded',
+      message: 'Disruptions loaded (offline mode)',
       data: List<DisruptionModel>.from(_disruptions),
     );
   }
