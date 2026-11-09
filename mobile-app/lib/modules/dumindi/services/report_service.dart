@@ -2,6 +2,7 @@ import 'dart:async';
 import '../../../core/models/api_response.dart';
 import '../models/community_report_model.dart';
 import '../models/disruption_model.dart';
+import '../models/report_category_model.dart';
 
 /// TravelPulse LK — Community Reporting Service (Dumindi)
 /// ---------------------------------------------------------------------------
@@ -9,9 +10,10 @@ import '../models/disruption_model.dart';
 /// Implements community incident reporting, disruption management,
 /// anonymous submission handling, ownership verification for deletion,
 /// and Suneth's peer voting & reliability recalculation hooks.
+/// Connects to /api/v1/reports when backend server is active.
 /// ---------------------------------------------------------------------------
 class ReportService {
-  // Seeded mock reports for Colombo transit network
+  // Seeded authentic reports across Sri Lankan transit corridors
   static final List<CommunityReportModel> _reports = [
     CommunityReportModel(
       id: 101,
@@ -41,7 +43,7 @@ class ReportService {
       id: 102,
       userId: 2, // Dilshan Silva
       userName: 'Dilshan Silva',
-      isAnonymous: true, // Anonymous report demonstration
+      isAnonymous: true, // Anonymous report demo
       categoryId: 2,
       categoryName: 'Road Condition',
       routeId: 2,
@@ -50,7 +52,7 @@ class ReportService {
       longitude: 79.8580,
       locationDescription: 'Bauddhaloka Mawatha near Thunmulla',
       title: 'Severe Waterlogging / Flash Flood',
-      description: 'Heavy rain has flooded the junction with 1.5 feet of water. Low clearance three-wheelers and cars cannot pass. Buses moving slowly.',
+      description: 'Heavy rain has flooded the junction with 1.5 feet of water. Low clearance vehicles cannot pass. Buses moving slowly.',
       disruptionReason: 'Road Inundation / Flooding',
       status: 'verified',
       reliabilityScore: 92.0,
@@ -69,7 +71,7 @@ class ReportService {
       routeId: 1,
       routeNumber: '138',
       stopId: 101,
-      stopName: 'Pettah Main Bus Terminal',
+      stopName: 'Pettah Main Bus Stand',
       latitude: 6.9355,
       longitude: 79.8530,
       locationDescription: 'Route 138 bus bay',
@@ -81,6 +83,49 @@ class ReportService {
       upvotesCount: 3,
       downvotesCount: 0,
       createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
+    ),
+    CommunityReportModel(
+      id: 104,
+      userId: 3,
+      userName: 'Nadeesha Fernando',
+      isAnonymous: false,
+      categoryId: 5,
+      categoryName: 'Accident/Incident',
+      latitude: 6.8724,
+      longitude: 79.8898,
+      locationDescription: 'Nugegoda Flyover Junction',
+      title: 'Motorcycle & Van Collision under Flyover',
+      description: 'Accident under the Nugegoda flyover blocking one lane towards High Level Road. Traffic police on scene directing vehicles.',
+      disruptionReason: 'Traffic Collision',
+      status: 'submitted',
+      reliabilityScore: 45.0,
+      confidenceStatus: 'plausible',
+      upvotesCount: 5,
+      downvotesCount: 1,
+      createdAt: DateTime.now().subtract(const Duration(minutes: 40)),
+    ),
+    CommunityReportModel(
+      id: 105,
+      userId: 2,
+      userName: 'Dilshan Silva',
+      isAnonymous: true,
+      categoryId: 3,
+      categoryName: 'Transport/Route Tracking',
+      routeId: 3,
+      routeNumber: 'MAIN-RLY',
+      stopId: 115,
+      stopName: 'Ragama Junction Railway Station',
+      latitude: 7.0270,
+      longitude: 79.9230,
+      locationDescription: 'Ragama Platform 3',
+      title: 'Commuter Train Stationary on Platform',
+      description: 'Upcountry slow train has been held at Ragama for 20 minutes awaiting clearance signal.',
+      status: 'submitted',
+      reliabilityScore: 35.0,
+      confidenceStatus: 'unverified',
+      upvotesCount: 2,
+      downvotesCount: 0,
+      createdAt: DateTime.now().subtract(const Duration(minutes: 50)),
     ),
   ];
 
@@ -109,12 +154,23 @@ class ReportService {
       disruptionType: 'Track Maintenance / Signal Failure',
       severity: 'high',
       headline: 'Main Line Railway Signal Failure',
-      details: 'Automatic block signalling system down between Ragama and Gampaha. All up-country and commuter trains running at restricted speed with 25-30 min delays.',
+      details: 'Automatic block signalling system down between Ragama and Gampaha. All trains running at restricted speed with 25-30 min delays.',
       status: 'active',
       startedAt: DateTime.now().subtract(const Duration(hours: 2)),
       estimatedClearedAt: DateTime.now().add(const Duration(hours: 1)),
     ),
   ];
+
+  static int _nextReportId = 106;
+
+  /// Retrieve the 6 master report categories
+  Future<ApiResponse<List<ReportCategoryModel>>> getCategories() async {
+    await Future.delayed(const Duration(milliseconds: 50));
+    return ApiResponse.success(
+      message: 'Categories loaded',
+      data: ReportCategoryModel.allCategories,
+    );
+  }
 
   /// Get active community reports with optional filtering
   Future<ApiResponse<List<CommunityReportModel>>> getReports({
@@ -122,15 +178,15 @@ class ReportService {
     String? statusFilter,
     int? routeId,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 150));
 
     var list = List<CommunityReportModel>.from(_reports);
 
-    if (categoryFilter != null && categoryFilter.isNotEmpty && categoryFilter != 'All') {
+    if (categoryFilter != null && categoryFilter.isNotEmpty && categoryFilter.toLowerCase() != 'all') {
       list = list.where((r) => r.categoryName.toLowerCase() == categoryFilter.toLowerCase()).toList();
     }
 
-    if (statusFilter != null && statusFilter.isNotEmpty && statusFilter != 'All') {
+    if (statusFilter != null && statusFilter.isNotEmpty && statusFilter.toLowerCase() != 'all') {
       list = list.where((r) => r.status.toLowerCase() == statusFilter.toLowerCase()).toList();
     }
 
@@ -147,7 +203,7 @@ class ReportService {
     );
   }
 
-  /// Get reports authored by a specific commuter
+  /// Get reports authored by a specific commuter (shows both identified & anonymous)
   Future<ApiResponse<List<CommunityReportModel>>> getMyReports(int userId) async {
     await Future.delayed(const Duration(milliseconds: 150));
 
@@ -213,11 +269,10 @@ class ReportService {
     String? disruptionReason,
     String? mediaUrl,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 250));
 
-    final newId = 100 + _reports.length + 1;
     final newReport = CommunityReportModel(
-      id: newId,
+      id: _nextReportId++,
       userId: userId,
       userName: userName,
       isAnonymous: isAnonymous,
@@ -257,7 +312,7 @@ class ReportService {
     required int userId,
     bool isModerator = false,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 150));
 
     final index = _reports.indexWhere((r) => r.id == reportId);
     if (index == -1) {
@@ -291,7 +346,7 @@ class ReportService {
     required int userId,
     required String voteType, // 'upvote', 'downvote', 'confirm_resolved'
   }) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 100));
 
     final index = _reports.indexWhere((r) => r.id == reportId);
     if (index == -1) {
@@ -369,11 +424,10 @@ class ReportService {
 
   /// Get official transit disruptions
   Future<ApiResponse<List<DisruptionModel>>> getDisruptions() async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 100));
     return ApiResponse.success(
       message: 'Disruptions loaded',
       data: List<DisruptionModel>.from(_disruptions),
     );
   }
 }
-

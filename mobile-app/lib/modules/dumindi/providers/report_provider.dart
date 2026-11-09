@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import '../models/community_report_model.dart';
 import '../models/disruption_model.dart';
+import '../models/report_category_model.dart';
 import '../services/report_service.dart';
 
 /// TravelPulse LK — Community Reporting State Provider (Dumindi)
+/// Coordinates incident reporting, disruption feeds, anonymous submissions,
+/// user authored reports, and peer verification state.
 class ReportProvider extends ChangeNotifier {
   final ReportService _reportService = ReportService();
 
+  List<ReportCategoryModel> _categories = ReportCategoryModel.allCategories;
   List<CommunityReportModel> _reports = [];
   List<CommunityReportModel> _myReports = [];
   List<DisruptionModel> _disruptions = [];
@@ -16,6 +20,7 @@ class ReportProvider extends ChangeNotifier {
   String _selectedCategory = 'All';
   String _selectedStatus = 'All';
 
+  List<ReportCategoryModel> get categories => _categories;
   List<CommunityReportModel> get reports => _reports;
   List<CommunityReportModel> get myReports => _myReports;
   List<DisruptionModel> get disruptions => _disruptions;
@@ -26,8 +31,19 @@ class ReportProvider extends ChangeNotifier {
   String get selectedStatus => _selectedStatus;
 
   ReportProvider() {
+    loadCategories();
     loadReports();
     loadDisruptions();
+  }
+
+  Future<void> loadCategories() async {
+    try {
+      final response = await _reportService.getCategories();
+      if (response.success && response.data != null) {
+        _categories = response.data!;
+        notifyListeners();
+      }
+    } catch (_) {}
   }
 
   Future<void> loadReports() async {
@@ -191,6 +207,9 @@ class ReportProvider extends ChangeNotifier {
       if (response.success) {
         _reports.removeWhere((r) => r.id == reportId);
         _myReports.removeWhere((r) => r.id == reportId);
+        if (_selectedReport?.id == reportId) {
+          _selectedReport = null;
+        }
         notifyListeners();
         return true;
       } else {
@@ -223,6 +242,10 @@ class ReportProvider extends ChangeNotifier {
         final index = _reports.indexWhere((r) => r.id == reportId);
         if (index != -1) {
           _reports[index] = updated;
+        }
+        final myIndex = _myReports.indexWhere((r) => r.id == reportId);
+        if (myIndex != -1) {
+          _myReports[myIndex] = updated;
         }
         if (_selectedReport?.id == reportId) {
           _selectedReport = updated;

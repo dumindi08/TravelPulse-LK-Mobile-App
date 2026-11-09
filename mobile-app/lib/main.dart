@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 import 'app.dart';
 import 'modules/nisal/providers/auth_provider.dart';
+import 'modules/nisal/providers/route_provider.dart';
+import 'modules/nisal/providers/journey_provider.dart';
+import 'modules/dumindi/providers/report_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final authProvider = AuthProvider();
-  runApp(TravelPulseApp(authProvider: authProvider));
+  final routeProvider = RouteProvider();
+  final journeyProvider = JourneyProvider();
+  final reportProvider = ReportProvider();
+
+  runApp(
+    TravelPulseApp(
+      authProvider: authProvider,
+      routeProvider: routeProvider,
+      journeyProvider: journeyProvider,
+      reportProvider: reportProvider,
+    ),
+  );
 }

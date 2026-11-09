@@ -4,19 +4,33 @@ import 'core/constants/route_constants.dart';
 import 'core/navigation/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'modules/nisal/providers/auth_provider.dart';
+import 'modules/nisal/providers/route_provider.dart';
+import 'modules/nisal/providers/journey_provider.dart';
+import 'modules/dumindi/providers/report_provider.dart';
 
 /// TravelPulse LK — Root Application Widget
 class TravelPulseApp extends StatelessWidget {
   final AuthProvider authProvider;
+  final RouteProvider? routeProvider;
+  final JourneyProvider? journeyProvider;
+  final ReportProvider? reportProvider;
 
   const TravelPulseApp({
     super.key,
     required this.authProvider,
+    this.routeProvider,
+    this.journeyProvider,
+    this.reportProvider,
   });
 
   @override
   Widget build(BuildContext context) {
-    final appRouter = AppRouter(authProvider: authProvider);
+    final appRouter = AppRouter(
+      authProvider: authProvider,
+      routeProvider: routeProvider,
+      journeyProvider: journeyProvider,
+      reportProvider: reportProvider,
+    );
 
     return ListenableBuilder(
       listenable: authProvider,
@@ -36,4 +50,3 @@ class TravelPulseApp extends StatelessWidget {
     );
   }
 }
-

@@ -8,15 +8,20 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/confirmation_dialog.dart';
 import '../../../core/widgets/custom_app_bar.dart';
 import '../providers/auth_provider.dart';
+import '../../dumindi/providers/report_provider.dart';
+import '../../dumindi/views/my_reports_view.dart';
+import '../../dumindi/views/recent_reports_view.dart';
 
 /// TravelPulse LK — Profile & Account Management Screen (Nisal)
 /// Handles commuter profile inspection, role badge, session status, and logout.
 class ProfileView extends StatelessWidget {
   final AuthProvider authProvider;
+  final ReportProvider? reportProvider;
 
   const ProfileView({
     super.key,
     required this.authProvider,
+    this.reportProvider,
   });
 
   Future<void> _handleLogout(BuildContext context) async {
@@ -169,6 +174,51 @@ class ProfileView extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.lg),
               ],
+
+              // Community Contributions Section
+              Text('Community Contributions', style: AppTypography.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.assignment_outlined, color: AppColors.primary),
+                      title: Text('My Submitted Reports', style: AppTypography.bodyLarge),
+                      subtitle: const Text('View and manage your incident reports', style: AppTypography.caption),
+                      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => MyReportsView(
+                              authProvider: authProvider,
+                              reportProvider: reportProvider ?? ReportProvider(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.dynamic_feed_rounded, color: AppColors.primary),
+                      title: Text('Community Reports Feed', style: AppTypography.bodyLarge),
+                      subtitle: const Text('Browse verified reports across the island', style: AppTypography.caption),
+                      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => RecentReportsView(
+                              authProvider: authProvider,
+                              reportProvider: reportProvider ?? ReportProvider(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
 
               // Commuter Preferences Section
               Text('Transit Preferences', style: AppTypography.titleMedium),

@@ -2,6 +2,7 @@ import 'dart:async';
 import '../../../core/models/api_response.dart';
 import '../models/route_model.dart';
 import '../models/stop_model.dart';
+import '../models/schedule_model.dart';
 
 /// TravelPulse LK — Transit Route & Schedule Service (Nisal)
 /// ---------------------------------------------------------------------------
@@ -18,12 +19,12 @@ class RouteService {
       name: 'Colombo Fort - Maharagama / Homagama',
       transportType: 'bus',
       operator: 'SLTB',
-      originCity: 'Pettah / Colombo Fort',
+      originCity: 'Colombo Fort',
       destinationCity: 'Maharagama',
       isActive: true,
       estTotalMinutes: 48,
       currentCrowdLevel: 'crowded',
-      activeDisruptionSummary: 'Traffic obstruction near Town Hall roundabout due to breakdown',
+      activeDisruptionSummary: 'Traffic obstruction near Town Hall roundabout due to vehicle breakdown',
       stops: [
         RouteStopSequenceModel(
           id: 1001,
@@ -110,7 +111,7 @@ class RouteService {
       name: 'Colombo Fort - Panadura (Galle Road)',
       transportType: 'bus',
       operator: 'Private',
-      originCity: 'Pettah',
+      originCity: 'Colombo Fort',
       destinationCity: 'Panadura',
       isActive: true,
       estTotalMinutes: 65,
@@ -263,6 +264,28 @@ class RouteService {
           distanceFromPrevKm: 12.0,
           estMinutesFromPrev: 18,
         ),
+        RouteStopSequenceModel(
+          id: 3006,
+          routeId: 3,
+          stopId: 121,
+          stopName: 'Polgahawela Junction',
+          stopOrder: 6,
+          latitude: 7.3320,
+          longitude: 80.3010,
+          distanceFromPrevKm: 42.0,
+          estMinutesFromPrev: 45,
+        ),
+        RouteStopSequenceModel(
+          id: 3007,
+          routeId: 3,
+          stopId: 122,
+          stopName: 'Kandy Railway Station',
+          stopOrder: 7,
+          latitude: 7.2906,
+          longitude: 80.6337,
+          distanceFromPrevKm: 51.0,
+          estMinutesFromPrev: 60,
+        ),
       ],
     ),
     RouteModel(
@@ -323,6 +346,193 @@ class RouteService {
         ),
       ],
     ),
+    RouteModel(
+      id: 5,
+      routeNumber: '120',
+      name: 'Colombo Fort - Horana (via Piliyandala)',
+      transportType: 'bus',
+      operator: 'Private',
+      originCity: 'Colombo Fort',
+      destinationCity: 'Horana',
+      isActive: true,
+      estTotalMinutes: 70,
+      currentCrowdLevel: 'moderate',
+      stops: [
+        RouteStopSequenceModel(
+          id: 5001,
+          routeId: 5,
+          stopId: 101,
+          stopName: 'Pettah Main Bus Stand',
+          stopOrder: 1,
+          latitude: 6.9355,
+          longitude: 79.8530,
+          distanceFromPrevKm: 0.0,
+          estMinutesFromPrev: 0,
+        ),
+        RouteStopSequenceModel(
+          id: 5002,
+          routeId: 5,
+          stopId: 104,
+          stopName: 'Town Hall / Viharamahadevi Park',
+          stopOrder: 2,
+          latitude: 6.9147,
+          longitude: 79.8653,
+          distanceFromPrevKm: 3.2,
+          estMinutesFromPrev: 12,
+        ),
+        RouteStopSequenceModel(
+          id: 5003,
+          routeId: 5,
+          stopId: 106,
+          stopName: 'Nugegoda Supermarket Stop',
+          stopOrder: 3,
+          latitude: 6.8724,
+          longitude: 79.8898,
+          distanceFromPrevKm: 4.5,
+          estMinutesFromPrev: 15,
+        ),
+        RouteStopSequenceModel(
+          id: 5004,
+          routeId: 5,
+          stopId: 123,
+          stopName: 'Piliyandala Clock Tower',
+          stopOrder: 4,
+          latitude: 6.8016,
+          longitude: 79.9227,
+          distanceFromPrevKm: 8.5,
+          estMinutesFromPrev: 24,
+        ),
+        RouteStopSequenceModel(
+          id: 5005,
+          routeId: 5,
+          stopId: 124,
+          stopName: 'Horana Bus Terminal',
+          stopOrder: 5,
+          latitude: 6.7167,
+          longitude: 80.0633,
+          distanceFromPrevKm: 14.8,
+          estMinutesFromPrev: 32,
+        ),
+      ],
+    ),
+    RouteModel(
+      id: 6,
+      routeNumber: 'COAST-RLY',
+      name: 'Coastal Line: Colombo Fort - Galle / Matara',
+      transportType: 'train',
+      operator: 'Sri Lanka Railways',
+      originCity: 'Colombo Fort',
+      destinationCity: 'Galle',
+      isActive: true,
+      estTotalMinutes: 125,
+      currentCrowdLevel: 'moderate',
+      stops: [
+        RouteStopSequenceModel(
+          id: 6001,
+          routeId: 6,
+          stopId: 102,
+          stopName: 'Colombo Fort Railway Station',
+          stopOrder: 1,
+          latitude: 6.9344,
+          longitude: 79.8540,
+          distanceFromPrevKm: 0.0,
+          estMinutesFromPrev: 0,
+        ),
+        RouteStopSequenceModel(
+          id: 6002,
+          routeId: 6,
+          stopId: 108,
+          stopName: 'Kollupitiya Station',
+          stopOrder: 2,
+          latitude: 6.9050,
+          longitude: 79.8510,
+          distanceFromPrevKm: 3.5,
+          estMinutesFromPrev: 6,
+        ),
+        RouteStopSequenceModel(
+          id: 6003,
+          routeId: 6,
+          stopId: 110,
+          stopName: 'Mount Lavinia Station',
+          stopOrder: 3,
+          latitude: 6.8378,
+          longitude: 79.8642,
+          distanceFromPrevKm: 8.0,
+          estMinutesFromPrev: 14,
+        ),
+        RouteStopSequenceModel(
+          id: 6004,
+          routeId: 6,
+          stopId: 112,
+          stopName: 'Panadura Station',
+          stopOrder: 4,
+          latitude: 6.7135,
+          longitude: 79.9074,
+          distanceFromPrevKm: 16.5,
+          estMinutesFromPrev: 24,
+        ),
+        RouteStopSequenceModel(
+          id: 6005,
+          routeId: 6,
+          stopId: 125,
+          stopName: 'Galle Railway Station',
+          stopOrder: 5,
+          latitude: 6.0367,
+          longitude: 80.2170,
+          distanceFromPrevKm: 88.0,
+          estMinutesFromPrev: 85,
+        ),
+      ],
+    ),
+  ];
+
+  // Preloaded authentic Sri Lankan transit schedules
+  static final List<RouteScheduleModel> _schedules = [
+    // Route 1 (138) - Outbound (Colombo Fort -> Maharagama)
+    RouteScheduleModel(id: 101, routeId: 1, departureTime: '06:00 AM', arrivalTime: '06:48 AM', dayOfWeek: 'weekday', tripDirection: 'outbound', vehiclePlate: 'NB-4512'),
+    RouteScheduleModel(id: 102, routeId: 1, departureTime: '06:30 AM', arrivalTime: '07:18 AM', dayOfWeek: 'weekday', tripDirection: 'outbound', vehiclePlate: 'NB-7821'),
+    RouteScheduleModel(id: 103, routeId: 1, departureTime: '07:00 AM', arrivalTime: '07:50 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'NC-1044'),
+    RouteScheduleModel(id: 104, routeId: 1, departureTime: '07:30 AM', arrivalTime: '08:22 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'NA-9932'),
+    RouteScheduleModel(id: 105, routeId: 1, departureTime: '08:15 AM', arrivalTime: '09:05 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'NB-5021'),
+    RouteScheduleModel(id: 106, routeId: 1, departureTime: '05:15 PM', arrivalTime: '06:08 PM', dayOfWeek: 'weekday', tripDirection: 'outbound', vehiclePlate: 'NB-3389'),
+
+    // Route 1 (138) - Inbound (Maharagama -> Colombo Fort)
+    RouteScheduleModel(id: 111, routeId: 1, departureTime: '06:00 AM', arrivalTime: '06:48 AM', dayOfWeek: 'all', tripDirection: 'inbound', vehiclePlate: 'NB-6211'),
+    RouteScheduleModel(id: 112, routeId: 1, departureTime: '06:45 AM', arrivalTime: '07:35 AM', dayOfWeek: 'weekday', tripDirection: 'inbound', vehiclePlate: 'NB-4512'),
+    RouteScheduleModel(id: 113, routeId: 1, departureTime: '07:20 AM', arrivalTime: '08:12 AM', dayOfWeek: 'weekday', tripDirection: 'inbound', vehiclePlate: 'NC-2133'),
+    RouteScheduleModel(id: 114, routeId: 1, departureTime: '08:00 AM', arrivalTime: '08:50 AM', dayOfWeek: 'all', tripDirection: 'inbound', vehiclePlate: 'NA-9932'),
+
+    // Route 2 (100) - Outbound (Colombo Fort -> Panadura)
+    RouteScheduleModel(id: 201, routeId: 2, departureTime: '06:15 AM', arrivalTime: '07:20 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'WP-ND-4412'),
+    RouteScheduleModel(id: 202, routeId: 2, departureTime: '07:00 AM', arrivalTime: '08:05 AM', dayOfWeek: 'weekday', tripDirection: 'outbound', vehiclePlate: 'WP-ND-6789'),
+    RouteScheduleModel(id: 203, routeId: 2, departureTime: '08:00 AM', arrivalTime: '09:05 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'WP-NE-1022'),
+
+    // Route 2 (100) - Inbound (Panadura -> Colombo Fort)
+    RouteScheduleModel(id: 211, routeId: 2, departureTime: '06:00 AM', arrivalTime: '07:05 AM', dayOfWeek: 'all', tripDirection: 'inbound', vehiclePlate: 'WP-ND-6789'),
+    RouteScheduleModel(id: 212, routeId: 2, departureTime: '07:15 AM', arrivalTime: '08:20 AM', dayOfWeek: 'weekday', tripDirection: 'inbound', vehiclePlate: 'WP-NE-1022'),
+
+    // Route 3 (MAIN-RLY) - Colombo Fort to Kandy (Trains)
+    RouteScheduleModel(id: 301, routeId: 3, departureTime: '05:55 AM', arrivalTime: '08:25 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'Express 1005 (Podi Menike)'),
+    RouteScheduleModel(id: 302, routeId: 3, departureTime: '07:00 AM', arrivalTime: '09:30 AM', dayOfWeek: 'weekday', tripDirection: 'outbound', vehiclePlate: 'Intercity 1029'),
+    RouteScheduleModel(id: 303, routeId: 3, departureTime: '08:30 AM', arrivalTime: '11:15 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'Udarata Menike 1015'),
+    RouteScheduleModel(id: 304, routeId: 3, departureTime: '03:35 PM', arrivalTime: '06:15 PM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'Express 1007'),
+
+    // Route 3 (MAIN-RLY) - Inbound (Kandy to Colombo Fort)
+    RouteScheduleModel(id: 311, routeId: 3, departureTime: '06:15 AM', arrivalTime: '08:45 AM', dayOfWeek: 'all', tripDirection: 'inbound', vehiclePlate: 'Intercity 1030'),
+    RouteScheduleModel(id: 312, routeId: 3, departureTime: '10:30 AM', arrivalTime: '01:10 PM', dayOfWeek: 'all', tripDirection: 'inbound', vehiclePlate: 'Udarata Menike 1016'),
+
+    // Route 4 (177) - Outbound & Inbound
+    RouteScheduleModel(id: 401, routeId: 4, departureTime: '06:30 AM', arrivalTime: '07:22 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'NA-5521'),
+    RouteScheduleModel(id: 402, routeId: 4, departureTime: '07:15 AM', arrivalTime: '08:07 AM', dayOfWeek: 'weekday', tripDirection: 'outbound', vehiclePlate: 'NA-8812'),
+    RouteScheduleModel(id: 411, routeId: 4, departureTime: '06:45 AM', arrivalTime: '07:37 AM', dayOfWeek: 'all', tripDirection: 'inbound', vehiclePlate: 'NA-5521'),
+
+    // Route 5 (120) - Outbound & Inbound
+    RouteScheduleModel(id: 501, routeId: 5, departureTime: '06:20 AM', arrivalTime: '07:30 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'WP-ND-8901'),
+    RouteScheduleModel(id: 502, routeId: 5, departureTime: '07:30 AM', arrivalTime: '08:40 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'WP-ND-9012'),
+
+    // Route 6 (COAST-RLY) - Coastal Express
+    RouteScheduleModel(id: 601, routeId: 6, departureTime: '06:50 AM', arrivalTime: '08:55 AM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'Ruhunu Kumari 8058'),
+    RouteScheduleModel(id: 602, routeId: 6, departureTime: '02:25 PM', arrivalTime: '04:30 PM', dayOfWeek: 'all', tripDirection: 'outbound', vehiclePlate: 'Galu Kumari 8056'),
   ];
 
   /// Get list of transit routes with optional search and transport type filter
@@ -330,7 +540,7 @@ class RouteService {
     String? searchQuery,
     String? transportType,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 150));
 
     var filtered = List<RouteModel>.from(_routes);
 
@@ -354,9 +564,62 @@ class RouteService {
     );
   }
 
+  /// Advanced search for routes connecting origin and destination
+  Future<ApiResponse<List<RouteModel>>> searchRoutesByOriginDestination({
+    required String origin,
+    required String destination,
+    String? transportType,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    final orig = origin.trim().toLowerCase();
+    final dest = destination.trim().toLowerCase();
+
+    var candidates = List<RouteModel>.from(_routes);
+
+    if (transportType != null && transportType.isNotEmpty && transportType.toLowerCase() != 'all') {
+      candidates = candidates.where((r) => r.transportType.toLowerCase() == transportType.toLowerCase()).toList();
+    }
+
+    final List<RouteModel> matched = [];
+
+    for (var route in candidates) {
+      // 1. Check endpoints match
+      final matchEndpoint = (route.originCity.toLowerCase().contains(orig) || orig.isEmpty) &&
+          (route.destinationCity.toLowerCase().contains(dest) || dest.isEmpty);
+
+      // 2. Check stops sequence: origin stop must appear before destination stop
+      int origIdx = -1;
+      int destIdx = -1;
+
+      for (int i = 0; i < route.stops.length; i++) {
+        final stopName = route.stops[i].stopName.toLowerCase();
+        if (orig.isNotEmpty && origIdx == -1 && stopName.contains(orig)) {
+          origIdx = i;
+        }
+        if (dest.isNotEmpty && stopName.contains(dest)) {
+          destIdx = i;
+        }
+      }
+
+      final matchStops = (orig.isEmpty || origIdx != -1) &&
+          (dest.isEmpty || destIdx != -1) &&
+          (orig.isEmpty || dest.isEmpty || origIdx <= destIdx);
+
+      if (matchEndpoint || matchStops) {
+        matched.add(route);
+      }
+    }
+
+    return ApiResponse.success(
+      message: 'Found ${matched.length} routes matching query',
+      data: matched,
+    );
+  }
+
   /// Get detailed route by ID including ordered stops and timetable
   Future<ApiResponse<RouteModel>> getRouteById(int id) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 100));
 
     final route = _routes.firstWhere(
       (r) => r.id == id,
@@ -384,9 +647,33 @@ class RouteService {
     );
   }
 
+  /// Get scheduled timetables for a specific route
+  Future<ApiResponse<List<RouteScheduleModel>>> getRouteSchedules(
+    int routeId, {
+    String? direction,
+    String? dayOfWeek,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    var list = _schedules.where((s) => s.routeId == routeId && s.isActive).toList();
+
+    if (direction != null && direction.isNotEmpty && direction != 'all') {
+      list = list.where((s) => s.tripDirection.toLowerCase() == direction.toLowerCase()).toList();
+    }
+
+    if (dayOfWeek != null && dayOfWeek.isNotEmpty && dayOfWeek != 'all') {
+      list = list.where((s) => s.dayOfWeek == 'all' || s.dayOfWeek.toLowerCase() == dayOfWeek.toLowerCase()).toList();
+    }
+
+    return ApiResponse.success(
+      message: 'Schedules loaded',
+      data: list,
+    );
+  }
+
   /// Get all master stops across routes
   Future<ApiResponse<List<StopModel>>> getAllStops() async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 80));
 
     final Map<int, StopModel> uniqueStops = {};
     for (var route in _routes) {
@@ -397,7 +684,7 @@ class RouteService {
             name: s.stopName,
             latitude: s.latitude,
             longitude: s.longitude,
-            city: 'Colombo Zone',
+            city: 'Western Province',
           );
         }
       }
@@ -409,4 +696,3 @@ class RouteService {
     );
   }
 }
-
