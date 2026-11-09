@@ -463,6 +463,10 @@ Authorization: Bearer <JWT_ACCESS_TOKEN>
   * `403 Forbidden`: User attempts to delete a report authored by someone else (`code: "FORBIDDEN_DELETE"`).
   * `404 Not Found`: Report does not exist (`code: "RESOURCE_NOT_FOUND"`).
 
+---
+
+### 2.3. Module 3: Suneth — Crowd Intelligence & Report Reliability Engine
+
 #### 2.3.1. Vote on Community Report
 * **Method:** `POST`
 * **URL:** `/api/v1/reports/:id/vote`

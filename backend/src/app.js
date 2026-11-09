@@ -4,6 +4,9 @@
  */
 
 const express = require('express');
+const authRoutes = require('./routes/auth.routes');
+const routeRoutes = require('./routes/route.routes');
+const journeyRoutes = require('./routes/journey.routes');
 const reportRoutes = require('./routes/report.routes');
 const crowdRoutes = require('./routes/crowd.routes');
 const incidentRoutes = require('./routes/incident.routes');
@@ -35,6 +38,11 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Module 1 Routes (Nisal)
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/routes', routeRoutes);
+app.use('/api/v1/journeys', journeyRoutes);
 
 // Module 2 Routes (Dumindi)
 app.use('/api/v1/reports', reportRoutes);

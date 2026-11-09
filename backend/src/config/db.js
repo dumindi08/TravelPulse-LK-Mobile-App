@@ -277,11 +277,136 @@ const initialAlertDeliveriesSeed = [
   { id: 2, alert_id: 301, user_id: 2, device_token_id: null, delivery_status: 'sent', fcm_message_id: 'fcm_mock_msg_301_002', delivered_at: new Date(Date.now() - 55 * 60 * 1000).toISOString(), created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
 ];
 
+const initialUsersSeed = [
+  { id: 1, name: 'Kamal Perera', email: 'kamal@example.com', password: 'Password123!', phoneNumber: '+94771234567', role: 'commuter', isActive: true },
+  { id: 2, name: 'Dilshan Silva', email: 'dilshan@example.com', password: 'Password123!', phoneNumber: '+94719876543', role: 'commuter', isActive: true },
+  { id: 3, name: 'Anusha Silva', email: 'moderator@travelpulse.lk', password: 'Password123!', phoneNumber: '+94762345678', role: 'moderator', isActive: true },
+  { id: 4, name: 'System Administrator', email: 'admin@travelpulse.lk', password: 'Password123!', phoneNumber: '+94703456789', role: 'admin', isActive: true },
+  { id: 5, name: 'Malith Senanayake', email: 'malith@example.com', password: 'Password123!', phoneNumber: '+94784567890', role: 'commuter', isActive: true },
+];
+
+const initialStopsSeed = [
+  { id: 101, name: 'Pettah Central Bus Stand', stopCode: 'PET-01', latitude: 6.9360, longitude: 79.8550, city: 'Colombo 11', isActive: true },
+  { id: 102, name: 'Colombo Fort Railway Station', stopCode: 'FOT-01', latitude: 6.9355, longitude: 79.8530, city: 'Colombo 01', isActive: true },
+  { id: 103, name: 'Slave Island / Kompannavidiya', stopCode: 'SLI-01', latitude: 6.9230, longitude: 79.8520, city: 'Colombo 02', isActive: true },
+  { id: 104, name: 'Town Hall / Viharamahadevi Park', stopCode: 'TOW-01', latitude: 6.9147, longitude: 79.8653, city: 'Colombo 07', isActive: true },
+  { id: 105, name: 'Bambalapitiya Junction', stopCode: 'BAM-01', latitude: 6.8890, longitude: 79.8560, city: 'Colombo 04', isActive: true },
+  { id: 106, name: 'Nugegoda Supermarket', stopCode: 'NUG-01', latitude: 6.8724, longitude: 79.8898, city: 'Nugegoda', isActive: true },
+  { id: 107, name: 'Maharagama Central Bus Stand', stopCode: 'MAH-01', latitude: 6.8480, longitude: 79.9265, city: 'Maharagama', isActive: true },
+  { id: 108, name: 'Homagama Main Bus Stand', stopCode: 'HOM-01', latitude: 6.8415, longitude: 79.9980, city: 'Homagama', isActive: true },
+  { id: 109, name: 'Mount Lavinia Junction', stopCode: 'MTL-01', latitude: 6.8375, longitude: 79.8640, city: 'Mount Lavinia', isActive: true },
+  { id: 110, name: 'Moratuwa Bus Stand', stopCode: 'MOR-01', latitude: 6.7730, longitude: 79.8820, city: 'Moratuwa', isActive: true },
+  { id: 111, name: 'Panadura Central Bus Stand', stopCode: 'PAN-01', latitude: 6.7130, longitude: 79.9070, city: 'Panadura', isActive: true },
+  { id: 112, name: 'Ragama Junction Railway Station', stopCode: 'RAG-01', latitude: 7.0270, longitude: 79.9230, city: 'Ragama', isActive: true },
+  { id: 113, name: 'Gampaha Railway Station', stopCode: 'GAM-01', latitude: 7.0910, longitude: 79.9990, city: 'Gampaha', isActive: true },
+  { id: 114, name: 'Polgahawela Railway Station', stopCode: 'POL-01', latitude: 7.3330, longitude: 80.3000, city: 'Polgahawela', isActive: true },
+  { id: 115, name: 'Kandy Railway Station', stopCode: 'KDY-01', latitude: 7.2906, longitude: 80.6337, city: 'Kandy', isActive: true },
+  { id: 116, name: 'Galle Central Railway Station', stopCode: 'GLE-01', latitude: 6.0367, longitude: 80.2170, city: 'Galle', isActive: true },
+];
+
+const initialRoutesSeed = [
+  {
+    id: 1,
+    routeNumber: '138',
+    name: 'Colombo Fort - Maharagama / Homagama',
+    transportType: 'bus',
+    operator: 'SLTB',
+    originCity: 'Colombo Fort',
+    destinationCity: 'Maharagama',
+    isActive: true,
+    estTotalMinutes: 48,
+    stops: [
+      { id: 1001, routeId: 1, stopId: 101, stopName: 'Pettah Central Bus Stand', stopOrder: 1, latitude: 6.9360, longitude: 79.8550, distanceFromPrevKm: 0.0, estMinutesFromPrev: 0 },
+      { id: 1002, routeId: 1, stopId: 102, stopName: 'Colombo Fort Railway Station', stopOrder: 2, latitude: 6.9355, longitude: 79.8530, distanceFromPrevKm: 0.8, estMinutesFromPrev: 4 },
+      { id: 1003, routeId: 1, stopId: 104, stopName: 'Town Hall / Viharamahadevi Park', stopOrder: 3, latitude: 6.9147, longitude: 79.8653, distanceFromPrevKm: 2.5, estMinutesFromPrev: 10 },
+      { id: 1004, routeId: 1, stopId: 106, stopName: 'Nugegoda Supermarket', stopOrder: 4, latitude: 6.8724, longitude: 79.8898, distanceFromPrevKm: 6.2, estMinutesFromPrev: 18 },
+      { id: 1005, routeId: 1, stopId: 107, stopName: 'Maharagama Central Bus Stand', stopOrder: 5, latitude: 6.8480, longitude: 79.9265, distanceFromPrevKm: 4.5, estMinutesFromPrev: 12 },
+      { id: 1006, routeId: 1, stopId: 108, stopName: 'Homagama Main Bus Stand', stopOrder: 6, latitude: 6.8415, longitude: 79.9980, distanceFromPrevKm: 6.0, estMinutesFromPrev: 14 },
+    ],
+  },
+  {
+    id: 2,
+    routeNumber: '100',
+    name: 'Pettah - Panadura',
+    transportType: 'bus',
+    operator: 'Western Province Transport Authority',
+    originCity: 'Pettah',
+    destinationCity: 'Panadura',
+    isActive: true,
+    estTotalMinutes: 70,
+    stops: [
+      { id: 2001, routeId: 2, stopId: 101, stopName: 'Pettah Central Bus Stand', stopOrder: 1, latitude: 6.9360, longitude: 79.8550, distanceFromPrevKm: 0.0, estMinutesFromPrev: 0 },
+      { id: 2002, routeId: 2, stopId: 105, stopName: 'Bambalapitiya Junction', stopOrder: 2, latitude: 6.8890, longitude: 79.8560, distanceFromPrevKm: 5.2, estMinutesFromPrev: 15 },
+      { id: 2003, routeId: 2, stopId: 109, stopName: 'Mount Lavinia Junction', stopOrder: 3, latitude: 6.8375, longitude: 79.8640, distanceFromPrevKm: 6.0, estMinutesFromPrev: 16 },
+      { id: 2004, routeId: 2, stopId: 110, stopName: 'Moratuwa Bus Stand', stopOrder: 4, latitude: 6.7730, longitude: 79.8820, distanceFromPrevKm: 7.5, estMinutesFromPrev: 20 },
+      { id: 2005, routeId: 2, stopId: 111, stopName: 'Panadura Central Bus Stand', stopOrder: 5, latitude: 6.7130, longitude: 79.9070, distanceFromPrevKm: 8.0, estMinutesFromPrev: 22 },
+    ],
+  },
+  {
+    id: 3,
+    routeNumber: 'MAIN-RLY',
+    name: 'Colombo Fort - Kandy Main Line',
+    transportType: 'train',
+    operator: 'Sri Lanka Railways',
+    originCity: 'Colombo Fort',
+    destinationCity: 'Kandy',
+    isActive: true,
+    estTotalMinutes: 165,
+    stops: [
+      { id: 3001, routeId: 3, stopId: 102, stopName: 'Colombo Fort Railway Station', stopOrder: 1, latitude: 6.9355, longitude: 79.8530, distanceFromPrevKm: 0.0, estMinutesFromPrev: 0 },
+      { id: 3002, routeId: 3, stopId: 112, stopName: 'Ragama Junction Railway Station', stopOrder: 2, latitude: 7.0270, longitude: 79.9230, distanceFromPrevKm: 15.0, estMinutesFromPrev: 25 },
+      { id: 3003, routeId: 3, stopId: 113, stopName: 'Gampaha Railway Station', stopOrder: 3, latitude: 7.0910, longitude: 79.9990, distanceFromPrevKm: 12.0, estMinutesFromPrev: 18 },
+      { id: 3004, routeId: 3, stopId: 114, stopName: 'Polgahawela Railway Station', stopOrder: 4, latitude: 7.3330, longitude: 80.3000, distanceFromPrevKm: 45.0, estMinutesFromPrev: 50 },
+      { id: 3005, routeId: 3, stopId: 115, stopName: 'Kandy Railway Station', stopOrder: 5, latitude: 7.2906, longitude: 80.6337, distanceFromPrevKm: 48.0, estMinutesFromPrev: 65 },
+    ],
+  },
+  {
+    id: 4,
+    routeNumber: 'COAST-RLY',
+    name: 'Colombo Fort - Galle Coastal Line',
+    transportType: 'train',
+    operator: 'Sri Lanka Railways',
+    originCity: 'Colombo Fort',
+    destinationCity: 'Galle',
+    isActive: true,
+    estTotalMinutes: 130,
+    stops: [
+      { id: 4001, routeId: 4, stopId: 102, stopName: 'Colombo Fort Railway Station', stopOrder: 1, latitude: 6.9355, longitude: 79.8530, distanceFromPrevKm: 0.0, estMinutesFromPrev: 0 },
+      { id: 4002, routeId: 4, stopId: 105, stopName: 'Bambalapitiya Junction', stopOrder: 2, latitude: 6.8890, longitude: 79.8560, distanceFromPrevKm: 5.2, estMinutesFromPrev: 12 },
+      { id: 4003, routeId: 4, stopId: 109, stopName: 'Mount Lavinia Junction', stopOrder: 3, latitude: 6.8375, longitude: 79.8640, distanceFromPrevKm: 6.0, estMinutesFromPrev: 14 },
+      { id: 4004, routeId: 4, stopId: 111, stopName: 'Panadura Central Bus Stand', stopOrder: 4, latitude: 6.7130, longitude: 79.9070, distanceFromPrevKm: 15.0, estMinutesFromPrev: 24 },
+      { id: 4005, routeId: 4, stopId: 116, stopName: 'Galle Central Railway Station', stopOrder: 5, latitude: 6.0367, longitude: 80.2170, distanceFromPrevKm: 85.0, estMinutesFromPrev: 80 },
+    ],
+  },
+];
+
+const initialSchedulesSeed = [
+  { id: 1, routeId: 1, departureTime: '06:00:00', arrivalTime: '07:00:00', dayOfWeek: 'all', tripDirection: 'outbound', isActive: true },
+  { id: 2, routeId: 1, departureTime: '06:30:00', arrivalTime: '07:30:00', dayOfWeek: 'all', tripDirection: 'outbound', isActive: true },
+  { id: 3, routeId: 1, departureTime: '07:00:00', arrivalTime: '08:00:00', dayOfWeek: 'all', tripDirection: 'outbound', isActive: true },
+  { id: 4, routeId: 1, departureTime: '07:30:00', arrivalTime: '08:30:00', dayOfWeek: 'all', tripDirection: 'outbound', isActive: true },
+  { id: 5, routeId: 1, departureTime: '08:00:00', arrivalTime: '09:00:00', dayOfWeek: 'all', tripDirection: 'outbound', isActive: true },
+  { id: 6, routeId: 2, departureTime: '06:15:00', arrivalTime: '07:35:00', dayOfWeek: 'all', tripDirection: 'outbound', isActive: true },
+  { id: 7, routeId: 2, departureTime: '07:00:00', arrivalTime: '08:20:00', dayOfWeek: 'all', tripDirection: 'outbound', isActive: true },
+  { id: 8, routeId: 3, departureTime: '05:55:00', arrivalTime: '08:50:00', dayOfWeek: 'all', tripDirection: 'outbound', isActive: true },
+  { id: 9, routeId: 3, departureTime: '07:00:00', arrivalTime: '09:45:00', dayOfWeek: 'all', tripDirection: 'outbound', isActive: true },
+];
+
+const initialJourneysSeed = [
+  { id: 501, userId: 1, routeId: 1, routeNumber: '138', originStopId: 101, originStopName: 'Pettah Central Bus Stand', destinationStopId: 107, destinationStopName: 'Maharagama Central Bus Stand', startTime: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), endTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), status: 'completed' },
+  { id: 502, userId: 2, routeId: 2, routeNumber: '100', originStopId: 101, originStopName: 'Pettah Central Bus Stand', destinationStopId: 105, destinationStopName: 'Bambalapitiya Junction', startTime: new Date(Date.now() - 60 * 60 * 1000).toISOString(), endTime: null, status: 'in_progress' },
+];
+
 /**
  * In-Memory Database Store (active for fast, reliable unit testing & offline dev)
  */
 class MemoryStore {
   constructor() {
+    this.users = JSON.parse(JSON.stringify(initialUsersSeed));
+    this.routes = JSON.parse(JSON.stringify(initialRoutesSeed));
+    this.stops = JSON.parse(JSON.stringify(initialStopsSeed));
+    this.schedules = JSON.parse(JSON.stringify(initialSchedulesSeed));
+    this.journeys = JSON.parse(JSON.stringify(initialJourneysSeed));
     this.categories = [...categoriesSeed];
     this.reports = JSON.parse(JSON.stringify(initialReportsSeed));
     this.userReputations = JSON.parse(JSON.stringify(initialUserReputationsSeed));
@@ -294,6 +419,8 @@ class MemoryStore {
     this.alertDeliveries = JSON.parse(JSON.stringify(initialAlertDeliveriesSeed));
     this.deviceTokens = [];
 
+    this.nextUserId = 6;
+    this.nextJourneyId = 503;
     this.nextReportId = 104;
     this.nextVoteId = 10;
     this.nextEstimateId = 10;
@@ -303,6 +430,148 @@ class MemoryStore {
     this.nextSubId = 4;
     this.nextDeliveryId = 3;
     this.nextTokenId = 1;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Module 1: Nisal (Users, Routes, Schedules & Journeys)
+  // ---------------------------------------------------------------------------
+  findUserByEmail(email) {
+    if (!email) return null;
+    return this.users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
+  }
+
+  findUserById(id) {
+    const user = this.users.find((u) => Number(u.id) === Number(id));
+    if (!user) return null;
+    const { password, ...safeUser } = user;
+    return safeUser;
+  }
+
+  createUser({ name, email, password, phoneNumber = null, role = 'commuter' }) {
+    const existing = this.findUserByEmail(email);
+    if (existing) {
+      return { error: 'EMAIL_EXISTS', message: 'An account with this email already exists.' };
+    }
+    const newUser = {
+      id: this.nextUserId++,
+      name,
+      email,
+      password: password || 'Password123!',
+      phoneNumber,
+      role,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+    this.users.push(newUser);
+    // Initialize reputation record in Suneth's table
+    this.userReputations.push({
+      user_id: newUser.id,
+      reputation_score: 10.0,
+      total_reports_submitted: 0,
+      verified_reports_count: 0,
+      rejected_reports_count: 0,
+      total_votes_cast: 0,
+    });
+    const { password: _, ...safeUser } = newUser;
+    return safeUser;
+  }
+
+  getRoutes({ transportType, origin, destination }) {
+    let result = [...this.routes];
+    if (transportType && transportType.toLowerCase() !== 'all') {
+      result = result.filter((r) => r.transportType.toLowerCase() === transportType.toLowerCase());
+    }
+    if (origin) {
+      const q = origin.toLowerCase();
+      result = result.filter((r) =>
+        r.originCity.toLowerCase().includes(q) ||
+        r.name.toLowerCase().includes(q) ||
+        r.stops.some((s) => s.stopName.toLowerCase().includes(q))
+      );
+    }
+    if (destination) {
+      const q = destination.toLowerCase();
+      result = result.filter((r) =>
+        r.destinationCity.toLowerCase().includes(q) ||
+        r.name.toLowerCase().includes(q) ||
+        r.stops.some((s) => s.stopName.toLowerCase().includes(q))
+      );
+    }
+    // Attach live crowd level from aggregations if available
+    return result.map((r) => {
+      const agg = this.getCrowdAggregation({ routeId: r.id });
+      return {
+        ...r,
+        currentCrowdLevel: agg ? agg.aggregated_crowd_level : 'moderate',
+      };
+    });
+  }
+
+  getRouteById(id) {
+    const route = this.routes.find((r) => Number(r.id) === Number(id));
+    if (!route) return null;
+    const agg = this.getCrowdAggregation({ routeId: route.id });
+    // Active disruptions on this route
+    const activeReports = this.reports.filter(
+      (rep) => Number(rep.route_id) === Number(route.id) && rep.status !== 'resolved' && rep.status !== 'rejected'
+    );
+    return {
+      ...route,
+      currentCrowdLevel: agg ? agg.aggregated_crowd_level : 'moderate',
+      crowdConfidenceScore: agg ? agg.confidence_score : 75.0,
+      activeDisruptions: activeReports.map((rep) => ({
+        id: rep.id,
+        title: rep.title,
+        status: rep.status,
+        reason: rep.disruption_reason,
+        location: rep.location_description,
+      })),
+    };
+  }
+
+  getRouteSchedules(routeId, { direction = 'outbound', dayOfWeek = 'all' } = {}) {
+    return this.schedules.filter((s) => {
+      if (Number(s.routeId) !== Number(routeId)) return false;
+      if (direction && s.tripDirection.toLowerCase() !== direction.toLowerCase()) return false;
+      if (dayOfWeek && dayOfWeek !== 'all' && s.dayOfWeek !== 'all' && s.dayOfWeek !== dayOfWeek) return false;
+      return true;
+    });
+  }
+
+  getJourneys(userId) {
+    return this.journeys.filter((j) => Number(j.userId) === Number(userId));
+  }
+
+  createJourney({ userId, routeId, originStopId, destinationStopId }) {
+    const route = this.routes.find((r) => Number(r.id) === Number(routeId));
+    const origin = this.stops.find((s) => Number(s.id) === Number(originStopId));
+    const dest = this.stops.find((s) => Number(s.id) === Number(destinationStopId));
+
+    const newJourney = {
+      id: this.nextJourneyId++,
+      userId: Number(userId),
+      routeId: Number(routeId),
+      routeNumber: route ? route.routeNumber : 'UNKNOWN',
+      originStopId: Number(originStopId),
+      originStopName: origin ? origin.name : 'Origin Stop',
+      destinationStopId: Number(destinationStopId),
+      destinationStopName: dest ? dest.name : 'Destination Stop',
+      startTime: new Date().toISOString(),
+      endTime: null,
+      status: 'in_progress',
+    };
+    this.journeys.unshift(newJourney);
+    return newJourney;
+  }
+
+  completeJourney(journeyId, userId) {
+    const journey = this.journeys.find(
+      (j) => Number(j.id) === Number(journeyId) && Number(j.userId) === Number(userId)
+    );
+    if (!journey) return null;
+    journey.status = 'completed';
+    journey.endTime = new Date().toISOString();
+    return journey;
   }
 
   // ---------------------------------------------------------------------------
@@ -903,6 +1172,11 @@ class MemoryStore {
   // Reset store for unit tests
   // ---------------------------------------------------------------------------
   reset() {
+    this.users = JSON.parse(JSON.stringify(initialUsersSeed));
+    this.routes = JSON.parse(JSON.stringify(initialRoutesSeed));
+    this.stops = JSON.parse(JSON.stringify(initialStopsSeed));
+    this.schedules = JSON.parse(JSON.stringify(initialSchedulesSeed));
+    this.journeys = JSON.parse(JSON.stringify(initialJourneysSeed));
     this.reports = JSON.parse(JSON.stringify(initialReportsSeed));
     this.userReputations = JSON.parse(JSON.stringify(initialUserReputationsSeed));
     this.reportVotes = JSON.parse(JSON.stringify(initialReportVotesSeed));
@@ -913,6 +1187,8 @@ class MemoryStore {
     this.alertSubscriptions = JSON.parse(JSON.stringify(initialAlertSubscriptionsSeed));
     this.alertDeliveries = JSON.parse(JSON.stringify(initialAlertDeliveriesSeed));
     this.deviceTokens = [];
+    this.nextUserId = 6;
+    this.nextJourneyId = 503;
     this.nextReportId = 104;
     this.nextVoteId = 10;
     this.nextEstimateId = 10;

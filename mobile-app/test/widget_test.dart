@@ -22,7 +22,7 @@ import 'package:travelpulse_mobile/modules/thimaya/providers/alert_provider.dart
 import 'package:travelpulse_mobile/modules/thimaya/providers/map_provider.dart';
 
 void main() {
-  group('TravelPulse LK — Full Mobile Test Suite (Stages 2, 3, 4, 5 & 6)', () {
+  group('TravelPulse LK — Full Mobile & Cross-Module Integration Test Suite (Stages 2–7)', () {
     testWidgets('1. Onboarding & Welcome screen smoke test', (WidgetTester tester) async {
       final authProvider = AuthProvider();
       final routeProvider = RouteProvider();
@@ -475,6 +475,102 @@ void main() {
 
       mapProvider.clearSelectedIncident();
       expect(mapProvider.selectedIncident, isNull);
+    });
+
+    testWidgets('18. Cross-Module Navigation Shell: exactly 5 items and central report action (Stage 7)', (WidgetTester tester) async {
+      final authProvider = AuthProvider();
+      final routeProvider = RouteProvider();
+      final journeyProvider = JourneyProvider();
+      final reportProvider = ReportProvider();
+      final crowdProvider = CrowdProvider();
+      final mapProvider = MapProvider();
+      final alertProvider = AlertProvider();
+
+      await authProvider.loginWithEmail('kamal@example.com', 'Password123!');
+
+      await tester.pumpWidget(
+        TravelPulseApp(
+          authProvider: authProvider,
+          routeProvider: routeProvider,
+          journeyProvider: journeyProvider,
+          reportProvider: reportProvider,
+          crowdProvider: crowdProvider,
+          mapProvider: mapProvider,
+          alertProvider: alertProvider,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Exactly 5 bottom navigation items matching Figma specifications
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('Routes'), findsOneWidget);
+      expect(find.text('Report'), findsOneWidget);
+      expect(find.text('Map'), findsOneWidget);
+      expect(find.text('Profile'), findsOneWidget);
+
+      // Verify switching to Routes tab
+      await tester.tap(find.text('Routes'));
+      await tester.pumpAndSettle();
+      expect(find.text('Public Transport Routes'), findsOneWidget);
+
+      // Verify switching to Map tab
+      await tester.tap(find.text('Map'));
+      await tester.pumpAndSettle();
+      expect(find.text('Live Transit & Road Map'), findsOneWidget);
+
+      // Verify switching to Profile tab
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
+      expect(find.text('Kamal Perera'), findsOneWidget);
+    });
+
+    test('19. Cross-Module Data Integration: Home screen feeds combining all 4 modules (Stage 7)', () async {
+      final routeProvider = RouteProvider();
+      final crowdProvider = CrowdProvider();
+      final reportProvider = ReportProvider();
+      final alertProvider = AlertProvider();
+
+      await routeProvider.loadRoutes();
+      await crowdProvider.loadAggregations();
+      await reportProvider.loadReports();
+      await alertProvider.loadAlerts();
+
+      // Route data available (Nisal)
+      expect(routeProvider.routes.isNotEmpty, isTrue);
+      final r138 = routeProvider.routes.firstWhere((r) => r.routeNumber == '138');
+      expect(r138.originCity, equals('Colombo Fort'));
+
+      // Crowd level attached (Suneth)
+      final crowd138 = crowdProvider.getCrowdLevelForRoute(1);
+      expect(crowd138, isNotEmpty);
+
+      // Active disruptions available (Dumindi)
+      expect(reportProvider.reports.isNotEmpty, isTrue);
+      final reportsOn138 = reportProvider.reports.where((r) => r.routeId == 1).toList();
+      expect(reportsOn138.isNotEmpty, isTrue);
+
+      // Travel alerts feed populated (Thimaya)
+      expect(alertProvider.alerts.isNotEmpty, isTrue);
+      expect(alertProvider.criticalAlerts.isNotEmpty, isTrue);
+    });
+
+    test('20. Cross-Module Promotion: Verified community report meets road incident criteria (Stage 7)', () async {
+      final reportProvider = ReportProvider();
+      final mapProvider = MapProvider();
+
+      await reportProvider.loadReports();
+      await mapProvider.loadMapData();
+
+      // Report 102 (Bauddhaloka Mawatha flash flood) has reliability score 92.0 (>= 70 threshold)
+      final floodReport = reportProvider.reports.firstWhere((r) => r.id == 102);
+      expect(floodReport.reliabilityScore, greaterThanOrEqualTo(70.0));
+      expect(floodReport.confidenceStatus, equals('verified'));
+
+      // Successfully promoted to confirmed road incident 401 on map
+      final matchingIncident = mapProvider.incidents.firstWhere((i) => i.sourceReportId == 102);
+      expect(matchingIncident.incidentType, equals('flooding'));
+      expect(matchingIncident.isCritical, isTrue);
+      expect(matchingIncident.addressText, contains('Bauddhaloka'));
     });
   });
 }
