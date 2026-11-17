@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../core/constants/app_constants.dart';
 import '../../../core/models/api_response.dart';
+import '../../../core/storage/local_storage_service.dart';
 import '../models/crowd_estimate_model.dart';
 import '../models/user_reputation_model.dart';
 
@@ -158,7 +159,10 @@ class CrowdService {
         final list = (decoded['data'] as List? ?? [])
             .map((item) => CrowdAggregationModel.fromJson(item as Map<String, dynamic>))
             .toList();
-        return ApiResponse.success(data: list, message: decoded['message']?.toString());
+        return ApiResponse.success(
+          data: list,
+          message: decoded['message']?.toString() ?? 'Crowd aggregations loaded successfully.',
+        );
       }
     } catch (_) {
       // Fallback to local mock state
@@ -180,6 +184,7 @@ class CrowdService {
         final decoded = json.decode(response.body);
         return ApiResponse.success(
           data: CrowdAggregationModel.fromJson(decoded['data'] as Map<String, dynamic>),
+          message: decoded['message']?.toString() ?? 'Route crowd loaded successfully.',
         );
       }
     } catch (_) {
@@ -200,7 +205,10 @@ class CrowdService {
       ),
     );
 
-    return ApiResponse.success(data: matched);
+    return ApiResponse.success(
+      data: matched,
+      message: 'Route crowd loaded (offline mode)',
+    );
   }
 
   /// 3. Get current crowd aggregation for a stop
@@ -213,6 +221,7 @@ class CrowdService {
         final decoded = json.decode(response.body);
         return ApiResponse.success(
           data: CrowdAggregationModel.fromJson(decoded['data'] as Map<String, dynamic>),
+          message: decoded['message']?.toString() ?? 'Stop crowd loaded successfully.',
         );
       }
     } catch (_) {
@@ -233,7 +242,10 @@ class CrowdService {
       ),
     );
 
-    return ApiResponse.success(data: matched);
+    return ApiResponse.success(
+      data: matched,
+      message: 'Stop crowd loaded (offline mode)',
+    );
   }
 
   /// 4. Submit real-time crowd estimate (Route XOR Stop)
@@ -252,13 +264,14 @@ class CrowdService {
       if (passengerWaitTimeMinutes != null) 'passengerWaitTimeMinutes': passengerWaitTimeMinutes,
     };
 
+    final effectiveToken = token ?? LocalStorageService().authToken;
     try {
       final uri = Uri.parse('$_baseUrl/crowd/estimate');
       final response = await _client.post(
         uri,
         headers: {
           'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
+          if (effectiveToken != null && effectiveToken.isNotEmpty) 'Authorization': 'Bearer $effectiveToken',
         },
         body: json.encode(payload),
       ).timeout(const Duration(seconds: 4));
@@ -267,7 +280,7 @@ class CrowdService {
         final decoded = json.decode(response.body);
         return ApiResponse.success(
           data: CrowdEstimateModel.fromJson(decoded['data']['estimate']),
-          message: decoded['message']?.toString(),
+          message: decoded['message']?.toString() ?? 'Crowd observation submitted successfully.',
         );
       }
     } catch (_) {
@@ -320,6 +333,7 @@ class CrowdService {
     String? token,
   }) async {
     final payload = {'voteType': voteType};
+    final effectiveToken = token ?? LocalStorageService().authToken;
 
     try {
       final uri = Uri.parse('$_baseUrl/reports/$reportId/vote');
@@ -327,7 +341,7 @@ class CrowdService {
         uri,
         headers: {
           'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
+          if (effectiveToken != null && effectiveToken.isNotEmpty) 'Authorization': 'Bearer $effectiveToken',
         },
         body: json.encode(payload),
       ).timeout(const Duration(seconds: 4));
@@ -336,12 +350,12 @@ class CrowdService {
         final decoded = json.decode(response.body);
         return ApiResponse.success(
           data: decoded['data'] as Map<String, dynamic>,
-          message: decoded['message']?.toString(),
+          message: decoded['message']?.toString() ?? 'Vote recorded successfully.',
         );
       } else if (response.statusCode == 400) {
         final decoded = json.decode(response.body);
-        return ApiResponse.error(
-          message: decoded['message'] ?? 'Cannot vote on report.',
+        return ApiResponse.failure(
+          message: decoded['message']?.toString() ?? 'Cannot vote on report.',
           statusCode: 400,
         );
       }
@@ -368,12 +382,13 @@ class CrowdService {
     required int userId,
     String? token,
   }) async {
+    final effectiveToken = token ?? LocalStorageService().authToken;
     try {
       final uri = Uri.parse('$_baseUrl/crowd/reputation?userId=$userId');
       final response = await _client.get(
         uri,
         headers: {
-          if (token != null) 'Authorization': 'Bearer $token',
+          if (effectiveToken != null && effectiveToken.isNotEmpty) 'Authorization': 'Bearer $effectiveToken',
         },
       ).timeout(const Duration(seconds: 4));
 
@@ -381,6 +396,7 @@ class CrowdService {
         final decoded = json.decode(response.body);
         return ApiResponse.success(
           data: UserReputationModel.fromJson(decoded['data'] as Map<String, dynamic>),
+          message: decoded['message']?.toString() ?? 'User reputation loaded successfully.',
         );
       }
     } catch (_) {
@@ -388,7 +404,10 @@ class CrowdService {
     }
 
     final rep = _mockReputations[userId] ?? UserReputationModel.initial(userId);
-    return ApiResponse.success(data: rep);
+    return ApiResponse.success(
+      data: rep,
+      message: 'User reputation loaded (offline mode)',
+    );
   }
 }
 

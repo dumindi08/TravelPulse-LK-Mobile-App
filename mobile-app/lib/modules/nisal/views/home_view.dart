@@ -563,10 +563,10 @@ class HomeView extends StatelessWidget {
         if (routeProvider.routes.isEmpty) {
           return EmptyStateView(
             title: 'No Routes Available',
-            description: 'Transit route data is currently offline.',
+            message: 'Transit route data is currently offline.',
             icon: Icons.directions_bus_outlined,
-            actionLabel: 'Refresh',
-            onActionPressed: () => routeProvider.loadRoutes(),
+            actionText: 'Refresh',
+            onAction: () => routeProvider.loadRoutes(),
           );
         }
 

@@ -3,16 +3,58 @@
  * Owning Member: Suneth
  */
 
+const { crowdRepository } = require('../repositories');
+const db = require('../config/db');
 const { memoryStore } = require('../config/db');
 
 /**
  * 1. POST /api/v1/crowd/estimate
  * Submit real-time commuter crowd observation
  */
-function submitCrowdEstimate(req, res) {
+async function submitCrowdEstimate(req, res) {
   const userId = req.user.id;
   const { routeId, stopId, crowdLevel, passengerWaitTimeMinutes } = req.body;
 
+  if (db.isLiveDb) {
+    try {
+      const result = await crowdRepository.submitCrowdEstimate({
+        userId,
+        routeId: routeId ? Number(routeId) : null,
+        stopId: stopId ? Number(stopId) : null,
+        crowdLevel: crowdLevel.toLowerCase(),
+        passengerWaitTimeMinutes: passengerWaitTimeMinutes !== undefined ? Number(passengerWaitTimeMinutes) : null,
+      });
+
+      return res.status(201).json({
+        success: true,
+        statusCode: 201,
+        message: 'Crowd observation recorded and aggregated successfully.',
+        data: {
+          estimate: result.estimate,
+          aggregation: result.aggregation
+            ? {
+                targetType: result.aggregation.routeId ? 'route' : 'stop',
+                targetId: result.aggregation.routeId || result.aggregation.stopId,
+                currentCrowdLevel: result.aggregation.aggregatedCrowdLevel,
+                sampleCount: result.aggregation.sampleCount,
+                confidenceScore: result.aggregation.confidenceScore,
+                lastUpdatedAt: result.aggregation.lastUpdatedAt || result.aggregation.timeSlot,
+              }
+            : null,
+        },
+      });
+    } catch (error) {
+      console.error('[CrowdController.submitCrowdEstimate] Error:', error);
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: error.message || 'Failed to record crowd observation.',
+        error: { code: 'CROWD_ESTIMATE_ERROR' },
+      });
+    }
+  }
+
+  db.assertFallbackAllowed();
   try {
     const estimate = memoryStore.addCrowdEstimate({
       user_id: userId,
@@ -67,7 +109,7 @@ function submitCrowdEstimate(req, res) {
  * 2. GET /api/v1/crowd/routes/:routeId
  * Get current aggregated crowd level for a transport route
  */
-function getRouteCrowd(req, res) {
+async function getRouteCrowd(req, res) {
   const routeId = Number(req.params.routeId);
 
   if (isNaN(routeId)) {
@@ -79,10 +121,44 @@ function getRouteCrowd(req, res) {
     });
   }
 
-  let aggregation = memoryStore.getCrowdAggregation({ routeId });
+  if (db.isLiveDb) {
+    try {
+      let aggregation = await crowdRepository.getCrowdAggregation(routeId, null);
+      if (!aggregation) {
+        aggregation = {
+          route_id: routeId,
+          stop_id: null,
+          time_slot: new Date().toISOString(),
+          aggregated_crowd_level: 'moderate',
+          sample_count: 0,
+          confidence_score: 30.0,
+          last_updated_at: new Date().toISOString(),
+          is_baseline: true,
+        };
+      }
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Route crowd aggregation retrieved successfully.',
+        data: {
+          targetType: 'route',
+          targetId: routeId,
+          currentCrowdLevel: aggregation.aggregatedCrowdLevel || aggregation.aggregated_crowd_level,
+          sampleCount: aggregation.sampleCount || aggregation.sample_count,
+          confidenceScore: aggregation.confidenceScore || aggregation.confidence_score,
+          lastUpdatedAt: aggregation.lastUpdatedAt || aggregation.last_updated_at || aggregation.time_slot,
+          isBaseline: Boolean(aggregation.is_baseline),
+        },
+      });
+    } catch (err) {
+      console.error('[CrowdController.getRouteCrowd] Error:', err);
+      return res.status(500).json({ success: false, statusCode: 500, message: 'Database error' });
+    }
+  }
 
+  db.assertFallbackAllowed();
+  let aggregation = memoryStore.getCrowdAggregation({ routeId });
   if (!aggregation) {
-    // Return baseline aggregation
     aggregation = {
       route_id: routeId,
       stop_id: null,
@@ -115,7 +191,7 @@ function getRouteCrowd(req, res) {
  * 3. GET /api/v1/crowd/stops/:stopId
  * Get current aggregated crowd level for a stop
  */
-function getStopCrowd(req, res) {
+async function getStopCrowd(req, res) {
   const stopId = Number(req.params.stopId);
 
   if (isNaN(stopId)) {
@@ -127,8 +203,43 @@ function getStopCrowd(req, res) {
     });
   }
 
-  let aggregation = memoryStore.getCrowdAggregation({ stopId });
+  if (db.isLiveDb) {
+    try {
+      let aggregation = await crowdRepository.getCrowdAggregation(null, stopId);
+      if (!aggregation) {
+        aggregation = {
+          route_id: null,
+          stop_id: stopId,
+          time_slot: new Date().toISOString(),
+          aggregated_crowd_level: 'moderate',
+          sample_count: 0,
+          confidence_score: 30.0,
+          last_updated_at: new Date().toISOString(),
+          is_baseline: true,
+        };
+      }
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Stop crowd aggregation retrieved successfully.',
+        data: {
+          targetType: 'stop',
+          targetId: stopId,
+          currentCrowdLevel: aggregation.aggregatedCrowdLevel || aggregation.aggregated_crowd_level,
+          sampleCount: aggregation.sampleCount || aggregation.sample_count,
+          confidenceScore: aggregation.confidenceScore || aggregation.confidence_score,
+          lastUpdatedAt: aggregation.lastUpdatedAt || aggregation.last_updated_at || aggregation.time_slot,
+          isBaseline: Boolean(aggregation.is_baseline),
+        },
+      });
+    } catch (err) {
+      console.error('[CrowdController.getStopCrowd] Error:', err);
+      return res.status(500).json({ success: false, statusCode: 500, message: 'Database error' });
+    }
+  }
 
+  db.assertFallbackAllowed();
+  let aggregation = memoryStore.getCrowdAggregation({ stopId });
   if (!aggregation) {
     aggregation = {
       route_id: null,
@@ -162,9 +273,34 @@ function getStopCrowd(req, res) {
  * 4. GET /api/v1/crowd/aggregations
  * Get all active crowd aggregations across transit network
  */
-function getAggregations(req, res) {
-  const rawList = memoryStore.getAllCrowdAggregations();
+async function getAggregations(req, res) {
+  if (db.isLiveDb) {
+    try {
+      const [rows] = await db.query('SELECT * FROM crowd_aggregations ORDER BY last_updated_at DESC');
+      const formatted = rows.map((a) => ({
+        id: a.id,
+        targetType: a.route_id ? 'route' : 'stop',
+        targetId: a.route_id || a.stop_id,
+        currentCrowdLevel: a.aggregated_crowd_level,
+        sampleCount: a.sample_count,
+        confidenceScore: parseFloat(a.confidence_score),
+        timeSlot: a.time_slot,
+        lastUpdatedAt: a.last_updated_at,
+      }));
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Active transit crowd aggregations retrieved successfully.',
+        data: formatted,
+      });
+    } catch (err) {
+      console.error('[CrowdController.getAggregations] Error:', err);
+      return res.status(500).json({ success: false, statusCode: 500, message: 'Database error' });
+    }
+  }
 
+  db.assertFallbackAllowed();
+  const rawList = memoryStore.getAllCrowdAggregations();
   const formatted = rawList.map((a) => ({
     id: a.id,
     targetType: a.route_id ? 'route' : 'stop',
@@ -188,7 +324,7 @@ function getAggregations(req, res) {
  * 5. POST /api/v1/reports/:id/vote or /api/v1/crowd/vote
  * Cast peer verification vote on a community report
  */
-function voteOnReport(req, res) {
+async function voteOnReport(req, res) {
   const reportId = Number(req.params.id || req.body.reportId);
   const userId = req.user.id;
   const { voteType } = req.body;
@@ -202,6 +338,50 @@ function voteOnReport(req, res) {
     });
   }
 
+  if (db.isLiveDb) {
+    try {
+      const result = await crowdRepository.voteOnReport(reportId, userId, voteType.toLowerCase());
+
+      if (result.error === 'REPORT_NOT_FOUND') {
+        return res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: `Community report #${reportId} not found.`,
+          error: { code: 'REPORT_NOT_FOUND' },
+        });
+      }
+
+      if (result.error === 'SELF_VOTING_FORBIDDEN') {
+        return res.status(400).json({
+          success: false,
+          statusCode: 400,
+          message: result.message || 'Authors cannot vote on their own community reports.',
+          error: { code: 'SELF_VOTING_DISALLOWED' },
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: `Vote '${voteType}' recorded successfully.`,
+        data: {
+          ...result,
+          reportId: result.id,
+          userVote: voteType.toLowerCase(),
+        },
+      });
+    } catch (err) {
+      console.error('[CrowdController.voteOnReport] Error:', err);
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: err.message || 'Failed to record vote.',
+        error: { code: 'VOTE_ERROR' },
+      });
+    }
+  }
+
+  db.assertFallbackAllowed();
   const report = memoryStore.getReportById(reportId);
   if (!report) {
     return res.status(404).json({
@@ -234,13 +414,32 @@ function voteOnReport(req, res) {
       statusCode: 200,
       message: `Vote '${voteType}' recorded successfully.`,
       data: {
+        id: result.report.id,
         reportId: result.report.id,
-        userVote: result.userVote,
-        upvotesCount: result.report.upvotes_count,
-        downvotesCount: result.report.downvotes_count,
+        userId: result.report.user_id,
+        userName: result.report.is_anonymous ? 'Anonymous Commuter' : result.report.user_name,
+        isAnonymous: Boolean(result.report.is_anonymous),
+        categoryId: result.report.category_id,
+        categoryName: result.report.category_name,
+        routeId: result.report.route_id,
+        routeNumber: result.report.route_number,
+        stopId: result.report.stop_id,
+        stopName: result.report.stop_name,
+        latitude: result.report.latitude,
+        longitude: result.report.longitude,
+        locationDescription: result.report.location_description,
+        title: result.report.title,
+        description: result.report.description,
+        disruptionReason: result.report.disruption_reason,
+        mediaUrl: result.report.media_url,
+        status: result.report.status,
         reliabilityScore: result.report.reliability_score,
         confidenceStatus: result.report.confidence_status,
-        status: result.report.status,
+        upvotesCount: result.report.upvotes_count,
+        downvotesCount: result.report.downvotes_count,
+        userVote: result.userVote,
+        createdAt: result.report.created_at,
+        resolvedAt: result.report.resolved_at,
       },
     });
   } catch (error) {
@@ -257,10 +456,34 @@ function voteOnReport(req, res) {
  * 6. GET /api/v1/crowd/reputation
  * Retrieve commuter credibility score and contribution stats
  */
-function getUserReputation(req, res) {
+async function getUserReputation(req, res) {
   const targetUserId = req.query.userId ? Number(req.query.userId) : req.user.id;
-  const reputation = memoryStore.getUserReputation(targetUserId);
 
+  if (db.isLiveDb) {
+    try {
+      const reputation = await crowdRepository.getUserReputation(targetUserId);
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'User reputation retrieved successfully.',
+        data: {
+          userId: reputation.user_id,
+          reputationScore: parseFloat(reputation.reputation_score),
+          totalReportsSubmitted: Number(reputation.total_reports_submitted),
+          verifiedReportsCount: Number(reputation.verified_reports_count),
+          rejectedReportsCount: Number(reputation.rejected_reports_count),
+          totalVotesCast: Number(reputation.total_votes_cast),
+          updatedAt: reputation.updated_at,
+        },
+      });
+    } catch (err) {
+      console.error('[CrowdController.getUserReputation] Error:', err);
+      return res.status(500).json({ success: false, statusCode: 500, message: 'Database error' });
+    }
+  }
+
+  db.assertFallbackAllowed();
+  const reputation = memoryStore.getUserReputation(targetUserId);
   return res.status(200).json({
     success: true,
     statusCode: 200,
@@ -285,4 +508,3 @@ module.exports = {
   voteOnReport,
   getUserReputation,
 };
-

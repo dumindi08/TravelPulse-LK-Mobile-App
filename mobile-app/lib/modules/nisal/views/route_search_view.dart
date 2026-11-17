@@ -342,7 +342,7 @@ class _RouteSearchViewState extends State<RouteSearchView> {
           // Search Button
           AppButton(
             text: 'Find Transit Routes',
-            icon: Icons.search_rounded,
+            leadingIcon: Icons.search_rounded,
             onPressed: _onSearch,
           ),
         ],
@@ -472,10 +472,10 @@ class _RouteSearchViewState extends State<RouteSearchView> {
         if (list.isEmpty) {
           return EmptyStateView(
             title: 'No Matching Routes Found',
-            description: 'Try adjusting your origin, destination, or transport mode filter.',
+            message: 'Try adjusting your origin, destination, or transport mode filter.',
             icon: Icons.search_off_rounded,
-            actionLabel: 'Reset Search',
-            onActionPressed: _clearAll,
+            actionText: 'Reset Search',
+            onAction: _clearAll,
           );
         }
 

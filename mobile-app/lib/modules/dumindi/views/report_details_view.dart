@@ -35,7 +35,7 @@ class ReportDetailsView extends StatelessWidget {
       builder: (ctx) => ConfirmationDialog(
         title: 'Delete Community Report?',
         message: 'Are you sure you want to delete report #${report.id} ("${report.title}")? This action will permanently remove it from the TravelPulse LK community feed.',
-        confirmLabel: 'Delete Report',
+        confirmText: 'Delete Report',
         isDestructive: true,
         onConfirm: () async {
           final success = await reportProvider.deleteReport(
@@ -103,10 +103,10 @@ class ReportDetailsView extends StatelessWidget {
               return Center(
                 child: EmptyStateView(
                   title: 'Report Not Found',
-                  description: 'The requested community report could not be found or has been removed.',
+                  message: 'The requested community report could not be found or has been removed.',
                   icon: Icons.search_off_rounded,
-                  actionLabel: 'Go Back',
-                  onActionPressed: () => Navigator.of(context).pop(),
+                  actionText: 'Go Back',
+                  onAction: () => Navigator.of(context).pop(),
                 ),
               );
             }

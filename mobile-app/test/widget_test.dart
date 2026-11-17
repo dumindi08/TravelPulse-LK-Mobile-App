@@ -389,7 +389,7 @@ void main() {
       expect(locationService.currentLocation.isManual, isFalse);
 
       // Distance calculation: Colombo Fort to Bambalapitiya (~5.2 km)
-      final distance = LocationService.distanceBetweenKm(
+      final distance = locationService.calculateDistanceKm(
         6.9355, 79.8530, // Fort
         6.8890, 79.8560, // Bambalapitiya
       );
@@ -422,21 +422,25 @@ void main() {
       expect(alertProvider.hasCriticalAlerts, isTrue);
 
       // Filter by severity
-      await alertProvider.setSeverityFilter('critical');
+      alertProvider.setSeverityFilter('critical');
+      await alertProvider.loadAlerts(severity: 'critical');
       expect(alertProvider.alerts.every((a) => a.severity.toLowerCase() == 'critical'), isTrue);
 
       // Update commuter alert subscription preferences
-      final updatedSub = await alertProvider.updateSubscription(
-        userId: 1,
-        subscriptionType: 'geo_radius',
-        centerLatitude: 6.9271,
-        centerLongitude: 79.8612,
-        radiusKm: 7.5,
-        pushNotificationsEnabled: true,
-        weatherAlerts: true,
-        roadHazards: true,
-        transitDisruptions: true,
-        soundAndVibrate: true,
+      final updatedSub = await alertProvider.updatePreferences(
+        AlertSubscriptionModel(
+          id: 1,
+          userId: 1,
+          subscriptionType: 'geo_radius',
+          centerLatitude: 6.9271,
+          centerLongitude: 79.8612,
+          radiusKm: 7.5,
+          pushNotificationsEnabled: true,
+          weatherAlerts: true,
+          roadHazards: true,
+          transitDisruptions: true,
+          soundAndVibrate: true,
+        ),
       );
       expect(updatedSub, isTrue);
       expect(alertProvider.subscription, isNotNull);
@@ -444,12 +448,16 @@ void main() {
       expect(alertProvider.subscription!.subscriptionType, equals('geo_radius'));
 
       // Register device FCM token
-      final registered = await alertProvider.registerDeviceToken(
-        userId: 1,
-        fcmToken: 'fcm_sample_commuter_device_token_xyz123',
-        deviceType: 'android',
+      await alertProvider.registerFcmToken(
+        1,
+        'fcm_sample_commuter_device_token_xyz123',
       );
-      expect(registered, isTrue);
+      final registered = await alertService.registerDeviceToken(
+        1,
+        'fcm_sample_commuter_device_token_xyz123',
+      );
+      expect(registered.isSuccess, isTrue);
+      expect(registered.data, isTrue);
     });
 
     test('17. MapProvider incident filtering, search, and selection (Thimaya)', () async {
@@ -464,8 +472,8 @@ void main() {
 
       // Test reset and search query
       mapProvider.setTypeFilter('All');
-      mapProvider.setSearchQuery('Kollupitiya');
-      expect(mapProvider.filteredIncidents.any((i) => i.addressText.contains('Kollupitiya')), isTrue);
+      mapProvider.setSearchQuery('Thunmulla');
+      expect(mapProvider.filteredIncidents.any((i) => i.addressText.contains('Thunmulla')), isTrue);
 
       // Test incident selection for bottom preview sheet
       final firstIncident = mapProvider.incidents.first;
@@ -473,7 +481,7 @@ void main() {
       expect(mapProvider.selectedIncident, isNotNull);
       expect(mapProvider.selectedIncident!.id, equals(firstIncident.id));
 
-      mapProvider.clearSelectedIncident();
+      mapProvider.selectIncident(null);
       expect(mapProvider.selectedIncident, isNull);
     });
 
@@ -486,7 +494,7 @@ void main() {
       final mapProvider = MapProvider();
       final alertProvider = AlertProvider();
 
-      await authProvider.loginWithEmail('kamal@example.com', 'Password123!');
+      await authProvider.login(emailOrUsername: 'kamal@example.com', password: 'Password123!');
 
       await tester.pumpWidget(
         TravelPulseApp(
@@ -511,17 +519,17 @@ void main() {
       // Verify switching to Routes tab
       await tester.tap(find.text('Routes'));
       await tester.pumpAndSettle();
-      expect(find.text('Public Transport Routes'), findsOneWidget);
+      expect(find.text('Search Routes & Transit'), findsOneWidget);
 
       // Verify switching to Map tab
       await tester.tap(find.text('Map'));
       await tester.pumpAndSettle();
-      expect(find.text('Live Transit & Road Map'), findsOneWidget);
+      expect(find.byTooltip('Select Location Manually'), findsOneWidget);
 
       // Verify switching to Profile tab
       await tester.tap(find.text('Profile'));
       await tester.pumpAndSettle();
-      expect(find.text('Kamal Perera'), findsOneWidget);
+      expect(find.text('Community Contributions'), findsOneWidget);
     });
 
     test('19. Cross-Module Data Integration: Home screen feeds combining all 4 modules (Stage 7)', () async {

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// TravelPulse LK — Global Application Constants
 class AppConstants {
   AppConstants._();
@@ -8,7 +10,21 @@ class AppConstants {
 
   // API Networking
   // Android emulator connects to host loopback via 10.0.2.2
-  static const String defaultApiBaseUrl = 'http://10.0.2.2:5000/api/v1';
+  // Web, iOS simulator, and desktop platforms connect via localhost
+  static const String androidApiBaseUrl = 'http://10.0.2.2:5000/api/v1';
+  static const String localApiBaseUrl = 'http://localhost:5000/api/v1';
+
+  static String get defaultApiBaseUrl {
+    if (kIsWeb) {
+      return localApiBaseUrl;
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return androidApiBaseUrl;
+    }
+    return localApiBaseUrl;
+  }
+
+  static String get apiBaseUrl => defaultApiBaseUrl;
   static const Duration connectTimeout = Duration(seconds: 10);
   static const Duration receiveTimeout = Duration(seconds: 15);
 

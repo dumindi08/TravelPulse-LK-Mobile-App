@@ -156,10 +156,11 @@ class JourneyService {
 
   /// Update journey status ('in_progress', 'completed', 'cancelled')
   Future<ApiResponse<JourneyModel>> updateJourneyStatus(int journeyId, String status) async {
-    // 1. Attempt live HTTP patch if completing
-    if (status == 'completed') {
+    // 1. Attempt live HTTP patch if completing or cancelling
+    if (status == 'completed' || status == 'cancelled') {
+      final action = status == 'completed' ? 'complete' : 'cancel';
       final apiRes = await _api.patch<JourneyModel>(
-        '/journeys/$journeyId/complete',
+        '/journeys/$journeyId/$action',
         fromJsonT: (json) => JourneyModel.fromJson(Map<String, dynamic>.from(json as Map)),
       );
 

@@ -20,6 +20,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isGuest => _isGuest;
   bool get isModerator => _currentUser?.isModerator ?? false;
   int? get currentUserId => _currentUser?.id;
+  String? get token => _storage.authToken;
+  String? get authToken => _storage.authToken;
 
   AuthProvider() {
     _initializeSession();

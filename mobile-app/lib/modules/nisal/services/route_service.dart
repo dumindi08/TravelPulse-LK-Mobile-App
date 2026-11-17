@@ -744,23 +744,27 @@ class RouteService {
       data: list,
     );
   }
-      list = list.where((s) => s.tripDirection.toLowerCase() == direction.toLowerCase()).toList();
-    }
-
-    if (dayOfWeek != null && dayOfWeek.isNotEmpty && dayOfWeek != 'all') {
-      list = list.where((s) => s.dayOfWeek == 'all' || s.dayOfWeek.toLowerCase() == dayOfWeek.toLowerCase()).toList();
-    }
-
-    return ApiResponse.success(
-      message: 'Schedules loaded',
-      data: list,
-    );
-  }
 
   /// Get all master stops across routes
   Future<ApiResponse<List<StopModel>>> getAllStops() async {
-    await Future.delayed(const Duration(milliseconds: 80));
+    // 1. Attempt live HTTP query against backend (/api/v1/routes/stops)
+    final apiRes = await _api.get<List<StopModel>>(
+      '/routes/stops',
+      fromJsonT: (json) {
+        if (json is List) {
+          return json
+              .map((item) => StopModel.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
+        }
+        return <StopModel>[];
+      },
+    );
 
+    if (apiRes.isSuccess && apiRes.data != null && apiRes.data!.isNotEmpty) {
+      return apiRes;
+    }
+
+    // 2. Offline fallback simulation
     final Map<int, StopModel> uniqueStops = {};
     for (var route in _routes) {
       for (var s in route.stops) {
@@ -777,7 +781,7 @@ class RouteService {
     }
 
     return ApiResponse.success(
-      message: 'Stops loaded',
+      message: 'Stops loaded (Offline mode)',
       data: uniqueStops.values.toList(),
     );
   }

@@ -3,7 +3,21 @@
  * Integrates with Nisal's JWT authentication framework.
  */
 
-function parseToken(authHeader) {
+const jwt = require('jsonwebtoken');
+const { userRepository } = require('../repositories');
+
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.trim() === '') {
+    if (process.env.NODE_ENV === 'production') {
+      return null;
+    }
+    return 'travelpulse_development_jwt_secret_key_2026';
+  }
+  return secret;
+}
+
+async function parseToken(authHeader) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }
@@ -11,69 +25,99 @@ function parseToken(authHeader) {
   const token = authHeader.substring(7).trim();
   if (!token) return null;
 
-  // 1. Support for known test tokens used in development & tests
-  if (token === 'test-token-kamal' || token === 'kamal-jwt-token') {
-    return { id: 1, name: 'Kamal Perera', email: 'kamal@example.com', role: 'commuter' };
-  }
-  if (token === 'test-token-dilshan' || token === 'dilshan-jwt-token') {
-    return { id: 2, name: 'Dilshan Silva', email: 'dilshan@example.com', role: 'commuter' };
-  }
-  if (token === 'test-token-moderator' || token === 'moderator-jwt-token') {
-    return { id: 99, name: 'Transit Moderator', email: 'moderator@travelpulse.lk', role: 'moderator' };
-  }
-  if (token === 'test-token-admin') {
-    return { id: 100, name: 'System Admin', email: 'admin@travelpulse.lk', role: 'admin' };
+  // 1. Support for known test tokens used in development & tests ONLY.
+  // STRICT SECURITY REQUIREMENT: Never accepted when NODE_ENV === 'production'.
+  if (process.env.NODE_ENV !== 'production') {
+    if (token === 'test-token-kamal' || token === 'kamal-jwt-token') {
+      return { id: 1, name: 'Kamal Perera', email: 'kamal@example.com', role: 'commuter' };
+    }
+    if (token === 'test-token-dilshan' || token === 'dilshan-jwt-token') {
+      return { id: 2, name: 'Dilshan Silva', email: 'dilshan@example.com', role: 'commuter' };
+    }
+    if (token === 'test-token-moderator' || token === 'moderator-jwt-token') {
+      return { id: 99, name: 'Transit Moderator', email: 'moderator@travelpulse.lk', role: 'moderator' };
+    }
+    if (token === 'test-token-admin') {
+      return { id: 100, name: 'System Admin', email: 'admin@travelpulse.lk', role: 'admin' };
+    }
   }
 
-  // 2. Standard 3-part JWT decoding (header.payload.signature)
-  try {
-    const parts = token.split('.');
-    if (parts.length === 3) {
-      const payloadJson = Buffer.from(parts[1], 'base64').toString('utf8');
-      const payload = JSON.parse(payloadJson);
-      return {
-        id: payload.id || payload.userId || payload.sub,
-        name: payload.name || 'Commuter',
-        email: payload.email || '',
-        role: payload.role || 'commuter',
-      };
-    }
-  } catch (_) {
+  // 2. Cryptographic JWT verification using jsonwebtoken
+  const secret = getJwtSecret();
+  if (!secret) {
     return null;
   }
 
-  return null;
+  try {
+    const decoded = jwt.verify(token, secret);
+    const userId = decoded.id || decoded.userId || decoded.sub;
+
+    // Validate account against persistent user repository to enforce server-authoritative role
+    const dbUser = await userRepository.findUserById(userId);
+    if (dbUser) {
+      return {
+        id: dbUser.id,
+        name: dbUser.name,
+        email: dbUser.email,
+        role: dbUser.role, // Server-verified role, never trusting forged tokens
+      };
+    }
+
+    return {
+      id: userId,
+      name: decoded.name || 'Commuter',
+      email: decoded.email || '',
+      role: decoded.role || 'commuter',
+    };
+  } catch (err) {
+    // Malformed, expired, invalid signature, or tampered token
+    return null;
+  }
 }
 
 /**
  * Require valid authenticated session
  */
-function requireAuth(req, res, next) {
-  const user = parseToken(req.headers.authorization);
+async function requireAuth(req, res, next) {
+  try {
+    const user = await parseToken(req.headers.authorization);
 
-  if (!user || !user.id) {
+    if (!user || !user.id) {
+      return res.status(401).json({
+        success: false,
+        statusCode: 401,
+        message: 'Authentication required. Please provide a valid Bearer token.',
+        error: {
+          code: 'UNAUTHORIZED',
+          details: 'Missing, expired, or invalid Authorization token.',
+        },
+      });
+    }
+
+    req.user = user;
+    next();
+  } catch (err) {
     return res.status(401).json({
       success: false,
       statusCode: 401,
       message: 'Authentication required. Please provide a valid Bearer token.',
-      error: {
-        code: 'UNAUTHORIZED',
-        details: 'Missing or invalid Authorization header.',
-      },
+      error: { code: 'UNAUTHORIZED' },
     });
   }
-
-  req.user = user;
-  next();
 }
 
 /**
  * Optional authentication: populates req.user if token is present, otherwise leaves null
  */
-function optionalAuth(req, res, next) {
-  const user = parseToken(req.headers.authorization);
-  req.user = user || null;
-  next();
+async function optionalAuth(req, res, next) {
+  try {
+    const user = await parseToken(req.headers.authorization);
+    req.user = user || null;
+    next();
+  } catch (err) {
+    req.user = null;
+    next();
+  }
 }
 
 /**
@@ -109,4 +153,3 @@ module.exports = {
   requireRole,
   parseToken,
 };
-

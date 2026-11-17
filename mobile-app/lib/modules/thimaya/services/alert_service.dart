@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../core/constants/app_constants.dart';
 import '../../../core/models/api_response.dart';
+import '../../../core/storage/local_storage_service.dart';
 import '../models/road_incident_model.dart';
 import '../models/travel_alert_model.dart';
 import '../models/alert_subscription_model.dart';
@@ -141,7 +142,10 @@ class AlertService {
         final list = (decoded['data'] as List? ?? [])
             .map((item) => TravelAlertModel.fromJson(item as Map<String, dynamic>))
             .toList();
-        return ApiResponse.success(data: list, message: decoded['message']?.toString());
+        return ApiResponse.success(
+          data: list,
+          message: decoded['message']?.toString() ?? 'Alerts retrieved successfully.',
+        );
       }
     } catch (_) {
       // Fallback
@@ -182,7 +186,10 @@ class AlertService {
         final list = (decoded['data'] as List? ?? [])
             .map((item) => RoadIncidentModel.fromJson(item as Map<String, dynamic>))
             .toList();
-        return ApiResponse.success(data: list, message: decoded['message']?.toString());
+        return ApiResponse.success(
+          data: list,
+          message: decoded['message']?.toString() ?? 'Incidents retrieved successfully.',
+        );
       }
     } catch (_) {
       // Fallback
@@ -204,12 +211,13 @@ class AlertService {
 
   /// 3. Get commuter notification preferences
   Future<ApiResponse<AlertSubscriptionModel>> getSubscriptions(int userId, {String? token}) async {
+    final effectiveToken = token ?? LocalStorageService().authToken;
     try {
       final uri = Uri.parse('$_baseUrl/alerts/subscriptions');
       final response = await _client.get(
         uri,
         headers: {
-          if (token != null) 'Authorization': 'Bearer $token',
+          if (effectiveToken != null && effectiveToken.isNotEmpty) 'Authorization': 'Bearer $effectiveToken',
         },
       ).timeout(const Duration(seconds: 4));
 
@@ -219,6 +227,7 @@ class AlertService {
         if (list.isNotEmpty) {
           return ApiResponse.success(
             data: AlertSubscriptionModel.fromJson(list.first as Map<String, dynamic>),
+            message: decoded['message']?.toString() ?? 'Subscription preferences retrieved successfully.',
           );
         }
       }
@@ -227,7 +236,10 @@ class AlertService {
     }
 
     final sub = _mockSubscriptions[userId] ?? AlertSubscriptionModel.defaults(userId);
-    return ApiResponse.success(data: sub);
+    return ApiResponse.success(
+      data: sub,
+      message: 'Subscription preferences retrieved (offline mode)',
+    );
   }
 
   /// 4. Save/update notification preferences
@@ -235,13 +247,14 @@ class AlertService {
     AlertSubscriptionModel subscription, {
     String? token,
   }) async {
+    final effectiveToken = token ?? LocalStorageService().authToken;
     try {
       final uri = Uri.parse('$_baseUrl/alerts/subscriptions');
       final response = await _client.post(
         uri,
         headers: {
           'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
+          if (effectiveToken != null && effectiveToken.isNotEmpty) 'Authorization': 'Bearer $effectiveToken',
         },
         body: json.encode(subscription.toJson()),
       ).timeout(const Duration(seconds: 4));
@@ -250,7 +263,7 @@ class AlertService {
         final decoded = json.decode(response.body);
         return ApiResponse.success(
           data: AlertSubscriptionModel.fromJson(decoded['data'] as Map<String, dynamic>),
-          message: decoded['message']?.toString(),
+          message: decoded['message']?.toString() ?? 'Notification preferences saved successfully.',
         );
       }
     } catch (_) {
@@ -265,22 +278,32 @@ class AlertService {
   }
 
   /// 5. Register device token for push notifications
-  Future<ApiResponse<bool>> registerDeviceToken(int userId, String token, {String? platform}) async {
+  Future<ApiResponse<bool>> registerDeviceToken(int userId, String fcmToken, {String? platform, String? token}) async {
+    final effectiveToken = token ?? LocalStorageService().authToken;
     try {
       final uri = Uri.parse('$_baseUrl/alerts/device-token');
       final response = await _client.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'userId': userId, 'token': token, 'platform': platform ?? 'android'}),
+        headers: {
+          'Content-Type': 'application/json',
+          if (effectiveToken != null && effectiveToken.isNotEmpty) 'Authorization': 'Bearer $effectiveToken',
+        },
+        body: json.encode({'token': fcmToken, 'platform': platform ?? 'android'}),
       ).timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
-        return ApiResponse.success(data: true);
+        return ApiResponse.success(
+          data: true,
+          message: 'Device token registered successfully.',
+        );
       }
     } catch (_) {
       // Fallback
     }
 
-    return ApiResponse.success(data: true);
+    return ApiResponse.success(
+      data: true,
+      message: 'Device token registered (offline mode)',
+    );
   }
 }

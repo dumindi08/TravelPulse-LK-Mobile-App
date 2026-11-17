@@ -107,7 +107,7 @@ class ReportSubmittedView extends StatelessWidget {
               // Action Buttons
               AppButton(
                 text: 'View in Community Feed',
-                icon: Icons.dynamic_feed_rounded,
+                leadingIcon: Icons.dynamic_feed_rounded,
                 onPressed: () {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(

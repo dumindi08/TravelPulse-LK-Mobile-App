@@ -40,9 +40,13 @@ class AppCard extends StatelessWidget {
         ),
         boxShadow: hasShadow ? AppSpacing.cardShadow : null,
       ),
-      child: Padding(
-        padding: padding,
-        child: child,
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: effectiveBorderRadius,
+        child: Padding(
+          padding: padding,
+          child: child,
+        ),
       ),
     );
 

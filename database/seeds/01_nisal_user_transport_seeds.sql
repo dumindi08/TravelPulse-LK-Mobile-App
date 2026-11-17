@@ -7,19 +7,20 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- -----------------------------------------------------------------------------
--- Table 1: users (Test accounts with bcrypt hashes for 'Password123!')
--- Hash: $2b$10$wT8KzQhUe2nZ1oG7Cj4vOeJzN1yKzW0dQq2sFvXxL9p0tM3e4k6uK (simulated)
+-- Table 1: users (Test accounts with real bcrypt hashes for 'Password123!')
+-- Hash generated via bcryptjs salt rounds 10
 -- -----------------------------------------------------------------------------
 INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `phone_number`, `role`, `is_active`)
 VALUES
-  (1, 'Kamal Perera', 'kamal@example.com', '$2b$10$wT8KzQhUe2nZ1oG7Cj4vOeJzN1yKzW0dQq2sFvXxL9p0tM3e4k6uK', '+94771234567', 'commuter', TRUE),
-  (2, 'Dilshan Silva', 'dilshan@example.com', '$2b$10$wT8KzQhUe2nZ1oG7Cj4vOeJzN1yKzW0dQq2sFvXxL9p0tM3e4k6uK', '+94719876543', 'commuter', TRUE),
-  (3, 'Anusha Silva', 'moderator@travelpulse.lk', '$2b$10$wT8KzQhUe2nZ1oG7Cj4vOeJzN1yKzW0dQq2sFvXxL9p0tM3e4k6uK', '+94762345678', 'moderator', TRUE),
-  (4, 'System Administrator', 'admin@travelpulse.lk', '$2b$10$wT8KzQhUe2nZ1oG7Cj4vOeJzN1yKzW0dQq2sFvXxL9p0tM3e4k6uK', '+94703456789', 'admin', TRUE),
-  (5, 'Malith Senanayake', 'malith@example.com', '$2b$10$wT8KzQhUe2nZ1oG7Cj4vOeJzN1yKzW0dQq2sFvXxL9p0tM3e4k6uK', '+94784567890', 'commuter', TRUE)
+  (1, 'Kamal Perera', 'kamal@example.com', '$2b$10$9V3v1bE1D6L8H.JR4bY8OeeiJ9Fb0miMHP7sM3DZ8Z11M0ws1AWQK', '+94771234567', 'commuter', TRUE),
+  (2, 'Dilshan Silva', 'dilshan@example.com', '$2b$10$9V3v1bE1D6L8H.JR4bY8OeeiJ9Fb0miMHP7sM3DZ8Z11M0ws1AWQK', '+94719876543', 'commuter', TRUE),
+  (3, 'Anusha Silva', 'moderator@travelpulse.lk', '$2b$10$9V3v1bE1D6L8H.JR4bY8OeeiJ9Fb0miMHP7sM3DZ8Z11M0ws1AWQK', '+94762345678', 'moderator', TRUE),
+  (4, 'System Administrator', 'admin@travelpulse.lk', '$2b$10$9V3v1bE1D6L8H.JR4bY8OeeiJ9Fb0miMHP7sM3DZ8Z11M0ws1AWQK', '+94703456789', 'admin', TRUE),
+  (5, 'Malith Senanayake', 'malith@example.com', '$2b$10$9V3v1bE1D6L8H.JR4bY8OeeiJ9Fb0miMHP7sM3DZ8Z11M0ws1AWQK', '+94784567890', 'commuter', TRUE)
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `role` = VALUES(`role`),
+  `password_hash` = VALUES(`password_hash`),
   `is_active` = VALUES(`is_active`);
 
 -- -----------------------------------------------------------------------------

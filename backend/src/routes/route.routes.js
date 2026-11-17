@@ -4,13 +4,13 @@
  */
 
 const express = require('express');
-const { getRoutes, getRouteById, getRouteSchedules } = require('../controllers/route.controller');
+const { getRoutes, getStops, getRouteById, getRouteSchedules } = require('../controllers/route.controller');
 
 const router = express.Router();
 
 router.get('/', getRoutes);
+router.get('/stops', getStops);
 router.get('/:id', getRouteById);
 router.get('/:id/schedules', getRouteSchedules);
 
 module.exports = router;
-

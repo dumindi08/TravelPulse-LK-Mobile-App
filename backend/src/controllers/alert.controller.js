@@ -3,6 +3,8 @@
  * Module 4: Road Conditions, Maps & Alerts (Thimaya)
  */
 
+const { alertRepository } = require('../repositories');
+const db = require('../config/db');
 const { memoryStore } = require('../config/db');
 const { notificationService } = require('../services/notification.service');
 
@@ -10,9 +12,31 @@ const { notificationService } = require('../services/notification.service');
  * 1. GET /api/v1/alerts
  * Retrieve active travel alerts
  */
-function getAlerts(req, res) {
+async function getAlerts(req, res) {
   const { alertType, severity, status = 'active', routeId } = req.query;
 
+  if (db.isLiveDb) {
+    try {
+      const alerts = await alertRepository.getAlerts({
+        alertType,
+        severity,
+        status,
+        routeId: routeId ? Number(routeId) : null,
+      });
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Travel alerts retrieved successfully.',
+        data: alerts,
+        meta: { count: alerts.length },
+      });
+    } catch (err) {
+      console.error('[AlertController.getAlerts] Error:', err);
+      return res.status(500).json({ success: false, statusCode: 500, message: 'Database error' });
+    }
+  }
+
+  db.assertFallbackAllowed();
   const rawList = memoryStore.getTravelAlerts({
     alertType,
     severity,
@@ -50,10 +74,34 @@ function getAlerts(req, res) {
  * 2. GET /api/v1/alerts/:id
  * Retrieve single alert details
  */
-function getAlertById(req, res) {
+async function getAlertById(req, res) {
   const id = Number(req.params.id);
-  const alert = memoryStore.getTravelAlertById(id);
 
+  if (db.isLiveDb) {
+    try {
+      const alert = await alertRepository.findAlertById(id);
+      if (!alert) {
+        return res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: `Travel alert #${id} not found.`,
+          error: { code: 'ALERT_NOT_FOUND' },
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Travel alert loaded successfully.',
+        data: alert,
+      });
+    } catch (err) {
+      console.error('[AlertController.getAlertById] Error:', err);
+      return res.status(500).json({ success: false, statusCode: 500, message: 'Database error' });
+    }
+  }
+
+  db.assertFallbackAllowed();
+  const alert = memoryStore.getTravelAlertById(id);
   if (!alert) {
     return res.status(404).json({
       success: false,
@@ -103,13 +151,50 @@ async function createAlert(req, res) {
     });
   }
 
+  if (db.isLiveDb) {
+    try {
+      const newAlert = await alertRepository.createAlert({
+        ...req.body,
+        createdBy: user.id,
+      });
+
+      const dispatchResult = await notificationService.dispatchAlert(newAlert);
+
+      return res.status(201).json({
+        success: true,
+        statusCode: 201,
+        message: 'Travel alert broadcasted successfully.',
+        data: {
+          alert: {
+            id: newAlert.id,
+            title: newAlert.title,
+            message: newAlert.message,
+            alertType: newAlert.alertType || newAlert.alert_type,
+            severity: newAlert.severity,
+            status: newAlert.status,
+            createdAt: newAlert.createdAt || newAlert.created_at,
+          },
+          dispatch: dispatchResult,
+        },
+      });
+    } catch (error) {
+      console.error('[AlertController.createAlert] Error:', error);
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: error.message || 'Failed to broadcast travel alert.',
+        error: { code: 'ALERT_CREATION_ERROR' },
+      });
+    }
+  }
+
+  db.assertFallbackAllowed();
   try {
     const newAlert = memoryStore.createTravelAlert({
       ...req.body,
       created_by: user.id,
     });
 
-    // Dispatch via notification service to subscribed commuters
     const dispatchResult = await notificationService.dispatchAlert(newAlert);
 
     return res.status(201).json({
@@ -143,10 +228,26 @@ async function createAlert(req, res) {
  * 4. GET /api/v1/alerts/subscriptions
  * Retrieve commuter's alert notification preferences
  */
-function getSubscriptions(req, res) {
+async function getSubscriptions(req, res) {
   const userId = req.user.id;
-  const subs = memoryStore.getUserAlertSubscriptions(userId);
 
+  if (db.isLiveDb) {
+    try {
+      const subs = await alertRepository.getSubscriptions(userId);
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'User alert subscriptions retrieved.',
+        data: subs,
+      });
+    } catch (err) {
+      console.error('[AlertController.getSubscriptions] Error:', err);
+      return res.status(500).json({ success: false, statusCode: 500, message: 'Database error' });
+    }
+  }
+
+  db.assertFallbackAllowed();
+  const subs = memoryStore.getUserAlertSubscriptions(userId);
   return res.status(200).json({
     success: true,
     statusCode: 200,
@@ -168,12 +269,32 @@ function getSubscriptions(req, res) {
  * 5. POST /api/v1/alerts/subscriptions
  * Save / update alert notification preferences
  */
-function updateSubscription(req, res) {
+async function updateSubscription(req, res) {
   const userId = req.user.id;
 
+  if (db.isLiveDb) {
+    try {
+      const saved = await alertRepository.updateSubscription(userId, req.body);
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Alert subscription preferences saved successfully.',
+        data: saved,
+      });
+    } catch (error) {
+      console.error('[AlertController.updateSubscription] Error:', error);
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: error.message || 'Failed to update subscription.',
+        error: { code: 'SUBSCRIPTION_ERROR' },
+      });
+    }
+  }
+
+  db.assertFallbackAllowed();
   try {
     const saved = memoryStore.saveUserAlertSubscription(userId, req.body);
-
     return res.status(200).json({
       success: true,
       statusCode: 200,
@@ -203,10 +324,30 @@ function updateSubscription(req, res) {
  * 6. POST /api/v1/alerts/device-token
  * Register FCM device token for push notifications
  */
-function registerDeviceToken(req, res) {
+async function registerDeviceToken(req, res) {
   const userId = req.user.id;
   const { token, platform = 'android' } = req.body;
 
+  if (db.isLiveDb) {
+    try {
+      const record = await alertRepository.registerDeviceToken(userId, token, platform);
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Device token registered successfully for push notifications.',
+        data: {
+          tokenId: record.id || 1,
+          userId: record.userId,
+          platform: record.deviceType,
+        },
+      });
+    } catch (err) {
+      console.error('[AlertController.registerDeviceToken] Error:', err);
+      return res.status(500).json({ success: false, statusCode: 500, message: 'Database error' });
+    }
+  }
+
+  db.assertFallbackAllowed();
   const record = memoryStore.saveDeviceToken({
     userId,
     token,
@@ -233,4 +374,3 @@ module.exports = {
   updateSubscription,
   registerDeviceToken,
 };
-

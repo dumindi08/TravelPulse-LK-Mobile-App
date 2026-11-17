@@ -6,6 +6,18 @@ try {
   require('dotenv').config();
 } catch (_) {}
 
+// Production security safeguard: Exit immediately if JWT_SECRET or DB_HOST is not configured
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim() === '') {
+    console.error('[FATAL] Missing required environment variable: JWT_SECRET must be set in production mode.');
+    process.exit(1);
+  }
+  if (!process.env.DB_HOST || process.env.DB_HOST.trim() === '') {
+    console.error('[FATAL] Missing required environment variable: DB_HOST must be set in production mode. MemoryStore fallback is strictly disabled in production.');
+    process.exit(1);
+  }
+}
+
 const app = require('./app');
 
 const PORT = process.env.PORT || 5000;
@@ -17,4 +29,3 @@ const server = app.listen(PORT, () => {
 });
 
 module.exports = server;
-

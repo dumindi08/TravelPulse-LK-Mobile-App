@@ -3,23 +3,42 @@
  * Module 4: Road Conditions, Maps & Alerts (Thimaya)
  */
 
+const { incidentRepository } = require('../repositories');
+const db = require('../config/db');
 const { memoryStore } = require('../config/db');
 
 /**
  * 1. GET /api/v1/incidents
  * Retrieve active road incidents and hazards for map visualization
  */
-function getIncidents(req, res) {
-  const { incidentType, severity, isActive = 'true', minLat, maxLat, minLon, maxLon } = req.query;
+async function getIncidents(req, res) {
+  const { incidentType, severity, isActive = 'true' } = req.query;
 
+  if (db.isLiveDb) {
+    try {
+      const incidents = await incidentRepository.getIncidents({
+        incidentType,
+        severity,
+        activeOnly: isActive === 'true',
+      });
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Road incidents retrieved successfully.',
+        data: incidents,
+        meta: { count: incidents.length },
+      });
+    } catch (err) {
+      console.error('[IncidentController.getIncidents] Error:', err);
+      return res.status(500).json({ success: false, statusCode: 500, message: 'Database error' });
+    }
+  }
+
+  db.assertFallbackAllowed();
   const rawList = memoryStore.getRoadIncidents({
     incidentType,
     severity,
     isActive,
-    minLat,
-    maxLat,
-    minLon,
-    maxLon,
   });
 
   const formatted = rawList.map((i) => ({
@@ -51,10 +70,34 @@ function getIncidents(req, res) {
  * 2. GET /api/v1/incidents/:id
  * Retrieve single road incident
  */
-function getIncidentById(req, res) {
+async function getIncidentById(req, res) {
   const id = Number(req.params.id);
-  const incident = memoryStore.getRoadIncidentById(id);
 
+  if (db.isLiveDb) {
+    try {
+      const incident = await incidentRepository.findIncidentById(id);
+      if (!incident) {
+        return res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: `Road incident #${id} not found.`,
+          error: { code: 'INCIDENT_NOT_FOUND' },
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: 'Road incident loaded successfully.',
+        data: incident,
+      });
+    } catch (err) {
+      console.error('[IncidentController.getIncidentById] Error:', err);
+      return res.status(500).json({ success: false, statusCode: 500, message: 'Database error' });
+    }
+  }
+
+  db.assertFallbackAllowed();
+  const incident = memoryStore.getRoadIncidentById(id);
   if (!incident) {
     return res.status(404).json({
       success: false,
@@ -89,16 +132,44 @@ function getIncidentById(req, res) {
 /**
  * 3. POST /api/v1/incidents/promote/:reportId
  * Promotes a community report to a confirmed road incident.
- * Enforces rule: report must have passed Suneth's algorithmic reliability score (>= 70)
- * OR must be approved by an authorized transport moderator.
  */
-function promoteReport(req, res) {
+async function promoteReport(req, res) {
   const reportId = Number(req.params.reportId);
   const user = req.user;
 
+  if (db.isLiveDb) {
+    try {
+      // Check moderator authorization or high reliability
+      const incident = await incidentRepository.promoteReportToIncident(reportId, user.id);
+      if (incident.error === 'REPORT_NOT_FOUND') {
+        return res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: `Community report #${reportId} not found.`,
+          error: { code: 'REPORT_NOT_FOUND' },
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        statusCode: 201,
+        message: `Community report #${reportId} promoted to confirmed road incident #${incident.id}.`,
+        data: incident,
+      });
+    } catch (error) {
+      console.error('[IncidentController.promoteReport] Error:', error);
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: error.message || 'Failed to promote report.',
+        error: { code: 'REPORT_PROMOTION_ERROR' },
+      });
+    }
+  }
+
+  db.assertFallbackAllowed();
   try {
     const incident = memoryStore.promoteReportToIncident(reportId, user);
-
     return res.status(201).json({
       success: true,
       statusCode: 201,
@@ -131,4 +202,3 @@ module.exports = {
   getIncidentById,
   promoteReport,
 };
-

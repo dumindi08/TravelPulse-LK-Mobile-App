@@ -14,6 +14,7 @@ class AppColors {
   static const Color secondary = Color(0xFF2E8B99); // Supporting Teal Accent
   static const Color secondaryDark = Color(0xFF1E5E68);
   static const Color secondaryLight = Color(0xFFE8F5F7);
+  static const Color secondaryContainer = Color(0xFFE8F5F7);
 
   // Functional / Semantic Status Colors
   static const Color success = Color(0xFF10B981); // Verified reports, clear roads

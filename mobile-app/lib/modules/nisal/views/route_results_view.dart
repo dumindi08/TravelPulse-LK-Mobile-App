@@ -90,10 +90,10 @@ class _RouteResultsViewState extends State<RouteResultsView> {
                   if (list.isEmpty)
                     EmptyStateView(
                       title: 'No Transit Routes Found',
-                      description: 'No direct or intermediate lines found between "${widget.origin}" and "${widget.destination}".',
+                      message: 'No direct or intermediate lines found between "${widget.origin}" and "${widget.destination}".',
                       icon: Icons.alt_route_rounded,
-                      actionLabel: 'Modify Search',
-                      onActionPressed: () => Navigator.of(context).pop(),
+                      actionText: 'Modify Search',
+                      onAction: () => Navigator.of(context).pop(),
                     )
                   else
                     ListView.separated(

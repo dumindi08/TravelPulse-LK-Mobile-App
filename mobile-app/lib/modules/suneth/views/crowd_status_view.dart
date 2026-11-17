@@ -143,10 +143,10 @@ class _CrowdStatusViewState extends State<CrowdStatusView> {
                     if (items.isEmpty)
                       EmptyStateView(
                         title: 'No Crowd Reports',
-                        description: 'No active crowd observations found for this category.',
+                        message: 'No active crowd observations found for this category.',
                         icon: Icons.groups_outlined,
-                        actionLabel: 'Be First to Report',
-                        onActionPressed: () => _openSubmitCrowdSheet(),
+                        actionText: 'Be First to Report',
+                        onAction: () => _openSubmitCrowdSheet(),
                       )
                     else
                       ListView.separated(

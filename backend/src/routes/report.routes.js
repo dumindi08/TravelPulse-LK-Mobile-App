@@ -12,6 +12,7 @@ const {
   getPublicReports,
   getReportById,
   getMyReports,
+  getDisruptions,
   createReport,
   updateReport,
   deleteReport,
@@ -25,26 +26,28 @@ const { validateReportVote } = require('../validators/crowd.validator');
 // 1. Master Categories Taxonomy (Public)
 router.get('/categories', getCategories);
 
-// 2. Commuter's Authored Reports (Protected — Requires Authentication)
+// 2. Verified Transport Disruptions (Public)
+router.get('/disruptions', getDisruptions);
+
+// 3. Commuter's Authored Reports (Protected — Requires Authentication)
 router.get('/my-reports', requireAuth, getMyReports);
 
-// 3. Public Community Feed (Public with optional auth for personal indicators)
+// 4. Public Community Feed (Public with optional auth for personal indicators)
 router.get('/', optionalAuth, getPublicReports);
 
-// 4. Single Report Details (Public with optional auth)
+// 5. Single Report Details (Public with optional auth)
 router.get('/:id', optionalAuth, getReportById);
 
-// 5. Submit New Community Report (Protected — Requires Authentication)
+// 6. Submit New Community Report (Protected — Requires Authentication)
 router.post('/', requireAuth, validateCreateReport, createReport);
 
-// 6. Update Report (Protected — Author or Moderator)
+// 7. Update Report (Protected — Author or Moderator)
 router.patch('/:id', requireAuth, validateUpdateReport, updateReport);
 
-// 7. Delete Report (Protected — Strictly Author or Moderator)
+// 8. Delete Report (Protected — Strictly Author or Moderator)
 router.delete('/:id', requireAuth, deleteReport);
 
-// 8. Peer Verification Voting on Report (Protected — Commuter)
+// 9. Peer Verification Voting on Report (Protected — Commuter)
 router.post('/:id/vote', requireAuth, validateReportVote, voteOnReport);
 
 module.exports = router;
-

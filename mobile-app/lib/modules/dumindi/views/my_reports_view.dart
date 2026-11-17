@@ -52,7 +52,7 @@ class _MyReportsViewState extends State<MyReportsView> {
       builder: (ctx) => ConfirmationDialog(
         title: 'Delete Your Report?',
         message: 'Are you sure you want to delete report #${report.id} ("${report.title}")? This will permanently remove your report.',
-        confirmLabel: 'Delete',
+        confirmText: 'Delete',
         isDestructive: true,
         onConfirm: () async {
           final success = await widget.reportProvider.deleteReport(
@@ -141,10 +141,10 @@ class _MyReportsViewState extends State<MyReportsView> {
             if (myReports.isEmpty) {
               return EmptyStateView(
                 title: 'No Reports Yet',
-                description: 'You have not submitted any transit disruption or incident reports yet.',
+                message: 'You have not submitted any transit disruption or incident reports yet.',
                 icon: Icons.assignment_outlined,
-                actionLabel: 'Create Your First Report',
-                onActionPressed: () {
+                actionText: 'Create Your First Report',
+                onAction: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => CreateReportView(

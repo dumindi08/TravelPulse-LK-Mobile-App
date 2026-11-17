@@ -19,10 +19,10 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: travelpulse_root_pass
-      MYSQL_DATABASE: travelpulse_lk
-      MYSQL_USER: travelpulse
-      MYSQL_PASSWORD: travelpulse_pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-travelpulse_root_pass}
+      MYSQL_DATABASE: ${DB_NAME:-travelpulse_lk}
+      MYSQL_USER: ${DB_USER:-travelpulse}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-travelpulse_pass}
     volumes:
       - mysql_data:/var/lib/mysql
       # Auto-run SQL scripts in alphabetical order upon initial database creation
@@ -32,7 +32,7 @@ services:
       - ./database/seeds/03_suneth_crowd_reliability_seeds.sql:/docker-entrypoint-initdb.d/04_suneth_seeds.sql:ro
       - ./database/seeds/04_thimaya_road_alerts_seeds.sql:/docker-entrypoint-initdb.d/05_thimaya_seeds.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "travelpulse", "-ptravelpulse_pass"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-travelpulse}", "-p${DB_PASSWORD:-travelpulse_pass}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,17 +50,17 @@ services:
     container_name: travelpulse-backend
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "${PORT:-5000}:5000"
     environment:
       PORT: 5000
-      NODE_ENV: production
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: travelpulse
-      DB_PASSWORD: travelpulse_pass
-      DB_NAME: travelpulse_lk
-      JWT_SECRET: travelpulse_group10_super_secret_jwt_key_2026
-      JWT_EXPIRES_IN: 7d
+      NODE_ENV: ${NODE_ENV:-production}
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER:-travelpulse}
+      DB_PASSWORD: ${DB_PASSWORD:-travelpulse_pass}
+      DB_NAME: ${DB_NAME:-travelpulse_lk}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
     depends_on:
       mysql:
         condition: service_healthy

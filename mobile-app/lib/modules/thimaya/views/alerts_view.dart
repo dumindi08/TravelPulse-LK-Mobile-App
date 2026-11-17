@@ -111,7 +111,7 @@ class _AlertsViewState extends State<AlertsView> {
                     if (alerts.isEmpty)
                       EmptyStateView(
                         title: 'No Active Travel Alerts',
-                        description: 'Transit corridors are operating normally with no severe weather or hazard advisories.',
+                        message: 'Transit corridors are operating normally with no severe weather or hazard advisories.',
                         icon: Icons.check_circle_outline_rounded,
                       )
                     else

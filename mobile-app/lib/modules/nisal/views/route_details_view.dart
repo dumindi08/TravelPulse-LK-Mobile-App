@@ -173,7 +173,7 @@ class _RouteDetailsViewState extends State<RouteDetailsView> with SingleTickerPr
                     // Confirm button
                     AppButton(
                       text: 'Start Journey Now',
-                      icon: Icons.navigation_rounded,
+                      leadingIcon: Icons.navigation_rounded,
                       onPressed: () async {
                         Navigator.of(ctx).pop();
 
@@ -239,10 +239,10 @@ class _RouteDetailsViewState extends State<RouteDetailsView> with SingleTickerPr
             body: Center(
               child: EmptyStateView(
                 title: 'Route Not Found',
-                description: 'The requested route could not be loaded.',
+                message: 'The requested route could not be loaded.',
                 icon: Icons.error_outline_rounded,
-                actionLabel: 'Go Back',
-                onActionPressed: () => Navigator.of(context).pop(),
+                actionText: 'Go Back',
+                onAction: () => Navigator.of(context).pop(),
               ),
             ),
           );
@@ -856,7 +856,7 @@ class _RouteDetailsViewState extends State<RouteDetailsView> with SingleTickerPr
                   )
                 : AppButton(
                     text: 'Start Journey on Route ${route.routeNumber}',
-                    icon: Icons.navigation_rounded,
+                    leadingIcon: Icons.navigation_rounded,
                     onPressed: () => _onStartJourney(route),
                   ),
           ),

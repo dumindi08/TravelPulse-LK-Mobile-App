@@ -220,10 +220,10 @@ class _RecentReportsViewState extends State<RecentReportsView> {
                   if (list.isEmpty) {
                     return EmptyStateView(
                       title: 'No Reports Found',
-                      description: 'There are currently no active community reports matching your filter.',
+                      message: 'There are currently no active community reports matching your filter.',
                       icon: Icons.campaign_outlined,
-                      actionLabel: 'Create First Report',
-                      onActionPressed: _onCreateReport,
+                      actionText: 'Create First Report',
+                      onAction: _onCreateReport,
                     );
                   }
 
