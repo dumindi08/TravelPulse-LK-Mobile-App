@@ -12,9 +12,12 @@
  *                       Crowd estimates, and Sliding-window crowd aggregations
  */
 
+const bcrypt = require('bcryptjs');
 const { calculateReliability } = require('../engine/confidenceScorer');
 const { findDuplicates } = require('../engine/duplicateDetector');
 const { aggregateCrowdEstimates } = require('../engine/crowdEngine');
+
+const DEFAULT_PASSWORD_HASH = bcrypt.hashSync('Password123!', 10);
 
 const categoriesSeed = [
   { id: 1, code: 'CROWD', name: 'Crowd Report', description: 'Real-time transit crowd density and wait times', default_severity: 'low', is_active: true },
@@ -106,6 +109,13 @@ const initialReportsSeed = [
     title: 'Heavy Evening Rush Hour Overcrowding',
     description: 'Huge queue extending over 50 meters. Buses arriving every 10 minutes but fill immediately.',
     disruption_reason: null,
+    transport_type: 'bus',
+    bus_route_number: '138',
+    destination: 'Maharagama',
+    bus_registration_number: 'NA-4512',
+    train_name_or_number: null,
+    starting_station: null,
+    crowd_level: 'heavy',
     media_url: null,
     status: 'submitted',
     reliability_score: 60.0,
@@ -278,11 +288,11 @@ const initialAlertDeliveriesSeed = [
 ];
 
 const initialUsersSeed = [
-  { id: 1, name: 'Kamal Perera', email: 'kamal@example.com', password: 'Password123!', phoneNumber: '+94771234567', role: 'commuter', isActive: true },
-  { id: 2, name: 'Dilshan Silva', email: 'dilshan@example.com', password: 'Password123!', phoneNumber: '+94719876543', role: 'commuter', isActive: true },
-  { id: 3, name: 'Anusha Silva', email: 'moderator@travelpulse.lk', password: 'Password123!', phoneNumber: '+94762345678', role: 'moderator', isActive: true },
-  { id: 4, name: 'System Administrator', email: 'admin@travelpulse.lk', password: 'Password123!', phoneNumber: '+94703456789', role: 'admin', isActive: true },
-  { id: 5, name: 'Malith Senanayake', email: 'malith@example.com', password: 'Password123!', phoneNumber: '+94784567890', role: 'commuter', isActive: true },
+  { id: 1, name: 'Kamal Perera', email: 'kamal@example.com', password_hash: DEFAULT_PASSWORD_HASH, phoneNumber: '+94771234567', role: 'commuter', isActive: true },
+  { id: 2, name: 'Dilshan Silva', email: 'dilshan@example.com', password_hash: DEFAULT_PASSWORD_HASH, phoneNumber: '+94719876543', role: 'commuter', isActive: true },
+  { id: 3, name: 'Anusha Silva', email: 'moderator@travelpulse.lk', password_hash: DEFAULT_PASSWORD_HASH, phoneNumber: '+94762345678', role: 'moderator', isActive: true },
+  { id: 4, name: 'System Administrator', email: 'admin@travelpulse.lk', password_hash: DEFAULT_PASSWORD_HASH, phoneNumber: '+94703456789', role: 'admin', isActive: true },
+  { id: 5, name: 'Malith Senanayake', email: 'malith@example.com', password_hash: DEFAULT_PASSWORD_HASH, phoneNumber: '+94784567890', role: 'commuter', isActive: true },
 ];
 
 const initialStopsSeed = [
@@ -443,22 +453,24 @@ class MemoryStore {
   findUserById(id) {
     const user = this.users.find((u) => Number(u.id) === Number(id));
     if (!user) return null;
-    const { password, ...safeUser } = user;
+    const { password, password_hash, ...safeUser } = user;
     return safeUser;
   }
 
-  createUser({ name, email, password, phoneNumber = null, role = 'commuter' }) {
+  createUser({ name, email, password, phoneNumber = null }) {
     const existing = this.findUserByEmail(email);
     if (existing) {
       return { error: 'EMAIL_EXISTS', message: 'An account with this email already exists.' };
     }
+    // Never store plain-text passwords; securely hash using bcrypt
+    const password_hash = bcrypt.hashSync(password || 'Password123!', 10);
     const newUser = {
       id: this.nextUserId++,
       name,
       email,
-      password: password || 'Password123!',
+      password_hash,
       phoneNumber,
-      role,
+      role: 'commuter', // Client-supplied role is NEVER trusted
       isActive: true,
       createdAt: new Date().toISOString(),
     };
@@ -472,7 +484,7 @@ class MemoryStore {
       rejected_reports_count: 0,
       total_votes_cast: 0,
     });
-    const { password: _, ...safeUser } = newUser;
+    const { password_hash: _, ...safeUser } = newUser;
     return safeUser;
   }
 
@@ -574,6 +586,20 @@ class MemoryStore {
     return journey;
   }
 
+  cancelJourney(journeyId, userId) {
+    const journey = this.journeys.find(
+      (j) => Number(j.id) === Number(journeyId) && Number(j.userId) === Number(userId)
+    );
+    if (!journey) return null;
+    journey.status = 'cancelled';
+    journey.endTime = new Date().toISOString();
+    return journey;
+  }
+
+  getStops() {
+    return [...this.stops];
+  }
+
   // ---------------------------------------------------------------------------
   // Categories (Dumindi Module)
   // ---------------------------------------------------------------------------
@@ -657,6 +683,13 @@ class MemoryStore {
       title: data.title,
       description: data.description,
       disruption_reason: data.disruption_reason || null,
+      transport_type: data.transport_type || data.transportType || null,
+      bus_route_number: data.bus_route_number || data.busRouteNumber || null,
+      destination: data.destination || null,
+      bus_registration_number: data.bus_registration_number || data.busRegistrationNumber || null,
+      train_name_or_number: data.train_name_or_number || data.trainNameOrNumber || null,
+      starting_station: data.starting_station || data.startingStation || null,
+      crowd_level: data.crowd_level || data.crowdLevel || null,
       media_url: data.media_url || null,
       status: reliabilityResult.confidenceStatus === 'verified' ? 'verified' : 'submitted',
       reliability_score: reliabilityResult.reliabilityScore,
@@ -1203,10 +1236,13 @@ class MemoryStore {
 
 const memoryStore = new MemoryStore();
 
-// Live MySQL 8.0+ Connection Pool (Optional — Activated when DB_HOST is set)
+// ---------------------------------------------------------------------------
+// Live MySQL 8.0+ Connection Pool & Query Interface
+// ---------------------------------------------------------------------------
 let pool = null;
+let _liveDbOverride = null;
 
-if (process.env.DB_HOST) {
+if (process.env.DB_HOST && process.env.DB_HOST.trim() !== '') {
   try {
     const mysql = require('mysql2/promise');
     pool = mysql.createPool({
@@ -1223,13 +1259,60 @@ if (process.env.DB_HOST) {
     });
     console.log(`[DB] MySQL pool initialized: ${process.env.DB_HOST}:${process.env.DB_PORT || 3306}/${process.env.DB_NAME || 'travelpulse_lk'}`);
   } catch (err) {
-    console.warn(`[DB] mysql2 driver not available or failed to connect (${err.message}). Using MemoryStore.`);
+    console.warn(`[DB] mysql2 driver not available or failed to initialize pool (${err.message}).`);
   }
+}
+
+/**
+ * Strict Production Guard: In production mode, silent fallback to MemoryStore is strictly prohibited.
+ */
+function assertFallbackAllowed() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      '[FATAL] Production database operation failed: Real MySQL connection is required. Fallback to MemoryStore is strictly prohibited in production mode.'
+    );
+  }
+}
+
+async function query(sql, params = []) {
+  if (!pool) {
+    assertFallbackAllowed();
+    throw new Error('[DB] No active MySQL pool.');
+  }
+  return pool.query(sql, params);
+}
+
+async function getConnection() {
+  if (!pool) {
+    assertFallbackAllowed();
+    throw new Error('[DB] No active MySQL pool.');
+  }
+  return pool.getConnection();
+}
+
+function setPool(customPool, isLive = true) {
+  pool = customPool;
+  _liveDbOverride = isLive;
+}
+
+function resetPool() {
+  pool = null;
+  _liveDbOverride = null;
 }
 
 module.exports = {
   memoryStore,
-  pool,
-  isLiveDb: Boolean(pool),
+  get pool() {
+    return pool;
+  },
+  get isLiveDb() {
+    if (_liveDbOverride !== null) return _liveDbOverride;
+    return Boolean(pool);
+  },
   getPool: () => pool,
+  setPool,
+  resetPool,
+  query,
+  getConnection,
+  assertFallbackAllowed,
 };

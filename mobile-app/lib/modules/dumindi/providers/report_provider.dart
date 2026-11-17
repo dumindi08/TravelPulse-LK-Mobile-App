@@ -142,6 +142,13 @@ class ReportProvider extends ChangeNotifier {
     required String title,
     required String description,
     String? disruptionReason,
+    String? transportType,
+    String? busRouteNumber,
+    String? destination,
+    String? busRegistrationNumber,
+    String? trainNameOrNumber,
+    String? startingStation,
+    String? crowdLevel,
     String? mediaUrl,
   }) async {
     _isLoading = true;
@@ -165,6 +172,13 @@ class ReportProvider extends ChangeNotifier {
         title: title,
         description: description,
         disruptionReason: disruptionReason,
+        transportType: transportType,
+        busRouteNumber: busRouteNumber,
+        destination: destination,
+        busRegistrationNumber: busRegistrationNumber,
+        trainNameOrNumber: trainNameOrNumber,
+        startingStation: startingStation,
+        crowdLevel: crowdLevel,
         mediaUrl: mediaUrl,
       );
 

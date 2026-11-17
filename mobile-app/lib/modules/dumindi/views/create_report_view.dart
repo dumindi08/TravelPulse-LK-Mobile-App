@@ -5,11 +5,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_text_field.dart';
-import '../../../core/widgets/status_badge.dart';
-import '../../../core/widgets/crowd_meter_badge.dart';
 import '../../nisal/providers/auth_provider.dart';
 import '../../nisal/providers/route_provider.dart';
-import '../models/community_report_model.dart';
 import '../models/report_category_model.dart';
 import '../providers/report_provider.dart';
 import 'report_submitted_view.dart';
@@ -45,12 +42,21 @@ class _CreateReportViewState extends State<CreateReportView> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _reasonController = TextEditingController();
 
+  // Transport-specific controllers (Category 1: Crowd Report)
+  String _selectedTransportType = 'bus'; // 'bus' or 'train'
+  final TextEditingController _busRouteNumberController = TextEditingController();
+  final TextEditingController _busDestinationController = TextEditingController();
+  final TextEditingController _busRegNumberController = TextEditingController();
+  final TextEditingController _trainNameOrNumberController = TextEditingController();
+  final TextEditingController _trainStartingStationController = TextEditingController();
+  final TextEditingController _trainDestinationController = TextEditingController();
+
   // Route & Stop Association (optional)
   int? _selectedRouteId;
   String? _selectedRouteNumber;
 
   // Category-specific parameters
-  String _selectedCrowdLevel = 'crowded';
+  String _selectedCrowdLevel = 'heavy'; // 'light', 'moderate', 'heavy', 'packed'
   String _selectedRoadHazard = 'Pothole';
 
   // Common disruption reasons for Sri Lankan transit
@@ -77,7 +83,6 @@ class _CreateReportViewState extends State<CreateReportView> {
   // Coordinates (Colombo Fort defaults)
   double _latitude = 6.9344;
   double _longitude = 79.8540;
-  bool _isUsingGps = true;
 
   // Anonymous reporting toggle
   bool _isAnonymous = false;
@@ -104,12 +109,17 @@ class _CreateReportViewState extends State<CreateReportView> {
     _descriptionController.dispose();
     _locationController.dispose();
     _reasonController.dispose();
+    _busRouteNumberController.dispose();
+    _busDestinationController.dispose();
+    _busRegNumberController.dispose();
+    _trainNameOrNumberController.dispose();
+    _trainStartingStationController.dispose();
+    _trainDestinationController.dispose();
     super.dispose();
   }
 
   void _useGpsLocation() {
     setState(() {
-      _isUsingGps = true;
       _latitude = 6.9344;
       _longitude = 79.8540;
       _locationController.text = 'Colombo Fort (GPS detected)';
@@ -134,6 +144,68 @@ class _CreateReportViewState extends State<CreateReportView> {
   void _showReviewDialog() {
     if (!_formKey.currentState!.validate()) {
       return;
+    }
+
+    // Category 1 (Crowd Report) validation check
+    if (_selectedCategory.id == 1) {
+      if (_selectedTransportType == 'bus') {
+        if (_busRouteNumberController.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enter a bus route number.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+        if (_busDestinationController.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enter a destination for the bus.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+      } else if (_selectedTransportType == 'train') {
+        if (_trainNameOrNumberController.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enter the train name or number.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+        if (_trainStartingStationController.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enter the starting station.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+        if (_trainDestinationController.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enter a destination for the train.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+      }
+
+      if (_selectedCrowdLevel.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select a crowd density level.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
     }
 
     // Category 4 (Service Disruption) validation check: reason must be specified
@@ -189,6 +261,22 @@ class _CreateReportViewState extends State<CreateReportView> {
                   // Category
                   _buildReviewRow('Category', _selectedCategory.name),
 
+                  // Crowd Report Transport Details (if Category 1)
+                  if (_selectedCategory.id == 1) ...[
+                    _buildReviewRow('Transport Mode', _selectedTransportType == 'bus' ? 'Bus' : 'Train'),
+                    if (_selectedTransportType == 'bus') ...[
+                      _buildReviewRow('Bus Route', _busRouteNumberController.text.trim()),
+                      _buildReviewRow('Destination', _busDestinationController.text.trim()),
+                      if (_busRegNumberController.text.trim().isNotEmpty)
+                        _buildReviewRow('Bus Reg No', _busRegNumberController.text.trim()),
+                    ] else ...[
+                      _buildReviewRow('Train Name/No', _trainNameOrNumberController.text.trim()),
+                      _buildReviewRow('Starting Station', _trainStartingStationController.text.trim()),
+                      _buildReviewRow('Destination', _trainDestinationController.text.trim()),
+                    ],
+                    _buildReviewRow('Crowd Level', _selectedCrowdLevel.toUpperCase()),
+                  ],
+
                   // Anonymous status
                   _buildReviewRow(
                     'Identity Visibility',
@@ -206,15 +294,11 @@ class _CreateReportViewState extends State<CreateReportView> {
                   if (_selectedCategory.id == 2)
                     _buildReviewRow('Hazard Type', _selectedRoadHazard),
 
-                  // Crowd Level (if category 1)
-                  if (_selectedCategory.id == 1)
-                    _buildReviewRow('Crowd Level', _selectedCrowdLevel.toUpperCase()),
-
                   // Location
                   _buildReviewRow('Location', '${_locationController.text.trim()} (${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)})'),
 
-                  // Route (if attached)
-                  if (_selectedRouteNumber != null)
+                  // Route (if attached and not already specified by crowd report transport fields)
+                  if (_selectedRouteNumber != null && _selectedCategory.id != 1)
                     _buildReviewRow('Associated Line', 'Route $_selectedRouteNumber'),
 
                   // Description
@@ -235,7 +319,7 @@ class _CreateReportViewState extends State<CreateReportView> {
                   // Confirm & Submit Button
                   AppButton(
                     text: 'Confirm & Submit Report',
-                    icon: Icons.send_rounded,
+                    leadingIcon: Icons.send_rounded,
                     isLoading: widget.reportProvider.isLoading,
                     onPressed: () async {
                       Navigator.of(ctx).pop();
@@ -286,12 +370,33 @@ class _CreateReportViewState extends State<CreateReportView> {
     final userName = user?.name ?? 'Commuter';
 
     String? reason;
+    String? transportType;
+    String? busRouteNumber;
+    String? destination;
+    String? busRegistrationNumber;
+    String? trainNameOrNumber;
+    String? startingStation;
+    String? crowdLevel;
+
     if (_selectedCategory.id == 4) {
       reason = _reasonController.text.trim();
     } else if (_selectedCategory.id == 2) {
       reason = _selectedRoadHazard;
     } else if (_selectedCategory.id == 1) {
-      reason = 'Crowd Level: $_selectedCrowdLevel';
+      reason = 'Crowd Level: ${_selectedCrowdLevel.toUpperCase()}';
+      transportType = _selectedTransportType;
+      crowdLevel = _selectedCrowdLevel;
+
+      if (_selectedTransportType == 'bus') {
+        busRouteNumber = _busRouteNumberController.text.trim();
+        destination = _busDestinationController.text.trim();
+        final reg = _busRegNumberController.text.trim();
+        busRegistrationNumber = reg.isNotEmpty ? reg : null;
+      } else if (_selectedTransportType == 'train') {
+        trainNameOrNumber = _trainNameOrNumberController.text.trim();
+        startingStation = _trainStartingStationController.text.trim();
+        destination = _trainDestinationController.text.trim();
+      }
     }
 
     final createdReport = await widget.reportProvider.submitReport(
@@ -301,13 +406,22 @@ class _CreateReportViewState extends State<CreateReportView> {
       categoryId: _selectedCategory.id,
       categoryName: _selectedCategory.name,
       routeId: _selectedRouteId,
-      routeNumber: _selectedRouteNumber,
+      routeNumber: _selectedCategory.id == 1
+          ? (_selectedTransportType == 'bus' ? busRouteNumber : trainNameOrNumber)
+          : _selectedRouteNumber,
       latitude: _latitude,
       longitude: _longitude,
       locationDescription: _locationController.text.trim(),
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       disruptionReason: reason,
+      transportType: transportType,
+      busRouteNumber: busRouteNumber,
+      destination: destination,
+      busRegistrationNumber: busRegistrationNumber,
+      trainNameOrNumber: trainNameOrNumber,
+      startingStation: startingStation,
+      crowdLevel: crowdLevel,
       mediaUrl: _hasAttachedMedia ? 'https://storage.travelpulse.lk/reports/sample_hazard.jpg' : null,
     );
 
@@ -380,7 +494,7 @@ class _CreateReportViewState extends State<CreateReportView> {
                 // 7. Submit Action
                 AppButton(
                   text: 'Review & Submit Report',
-                  icon: Icons.rate_review_rounded,
+                  leadingIcon: Icons.rate_review_rounded,
                   onPressed: _showReviewDialog,
                 ),
                 const SizedBox(height: AppSpacing.xl),
@@ -512,7 +626,7 @@ class _CreateReportViewState extends State<CreateReportView> {
       );
     }
 
-    // 2. Crowd Report (Category 1) -> Density Picker
+    // 2. Crowd Report (Category 1) -> Transport Type & Details + Density Picker
     if (_selectedCategory.id == 1) {
       return AppCard(
         padding: const EdgeInsets.all(14),
@@ -523,19 +637,134 @@ class _CreateReportViewState extends State<CreateReportView> {
               children: [
                 const Icon(Icons.groups_rounded, size: 18, color: AppColors.primary),
                 const SizedBox(width: 6),
-                Text('Crowd Density Level', style: AppTypography.titleSmall),
+                Text('Crowd Report Details', style: AppTypography.titleSmall),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
+            Text(
+              'Select transport mode and provide trip details to help fellow commuters.',
+              style: AppTypography.caption,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // Transport Type Selector
+            Text('Transport Type', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
             Row(
               children: [
-                _buildCrowdOption('empty', 'Light', AppColors.crowdEmpty),
+                _buildTransportTypeOption(
+                  type: 'bus',
+                  label: 'Bus',
+                  icon: Icons.directions_bus_rounded,
+                ),
+                const SizedBox(width: 8),
+                _buildTransportTypeOption(
+                  type: 'train',
+                  label: 'Train',
+                  icon: Icons.train_rounded,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Mode-specific fields
+            if (_selectedTransportType == 'bus') ...[
+              AppTextField(
+                label: 'Bus Route Number *',
+                controller: _busRouteNumberController,
+                hintText: 'e.g. 138, 120, 177',
+                prefixIcon: Icons.alt_route_rounded,
+                validator: (val) {
+                  if (_selectedCategory.id == 1 && _selectedTransportType == 'bus') {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Bus route number is required.';
+                    }
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppTextField(
+                label: 'Destination *',
+                controller: _busDestinationController,
+                hintText: 'e.g. Maharagama, Pettah, Kandy',
+                prefixIcon: Icons.flag_outlined,
+                validator: (val) {
+                  if (_selectedCategory.id == 1 && _selectedTransportType == 'bus') {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Destination is required.';
+                    }
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppTextField(
+                label: 'Bus Registration Number (Optional)',
+                controller: _busRegNumberController,
+                hintText: 'e.g. NA-4512 or WP ND-9876',
+                prefixIcon: Icons.badge_outlined,
+              ),
+            ] else ...[
+              AppTextField(
+                label: 'Train Name or Number *',
+                controller: _trainNameOrNumberController,
+                hintText: 'e.g. Samudra Devi, Express 1005',
+                prefixIcon: Icons.train_outlined,
+                validator: (val) {
+                  if (_selectedCategory.id == 1 && _selectedTransportType == 'train') {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Train name or number is required.';
+                    }
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppTextField(
+                label: 'Starting Station *',
+                controller: _trainStartingStationController,
+                hintText: 'e.g. Colombo Fort, Kandy, Galle',
+                prefixIcon: Icons.trip_origin_rounded,
+                validator: (val) {
+                  if (_selectedCategory.id == 1 && _selectedTransportType == 'train') {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Starting station is required.';
+                    }
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppTextField(
+                label: 'Destination *',
+                controller: _trainDestinationController,
+                hintText: 'e.g. Matara, Badulla, Fort',
+                prefixIcon: Icons.flag_outlined,
+                validator: (val) {
+                  if (_selectedCategory.id == 1 && _selectedTransportType == 'train') {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Destination is required.';
+                    }
+                  }
+                  return null;
+                },
+              ),
+            ],
+            const SizedBox(height: AppSpacing.md),
+
+            // Crowd Density Level
+            Text('Crowd Density Level', style: AppTypography.caption.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                _buildCrowdOption('light', 'Light', AppColors.crowdEmpty),
                 const SizedBox(width: 6),
                 _buildCrowdOption('moderate', 'Moderate', AppColors.crowdModerate),
                 const SizedBox(width: 6),
-                _buildCrowdOption('crowded', 'Heavy', AppColors.crowdCrowded),
+                _buildCrowdOption('heavy', 'Heavy', AppColors.crowdCrowded),
                 const SizedBox(width: 6),
-                _buildCrowdOption('very_crowded', 'Packed', AppColors.crowdPacked),
+                _buildCrowdOption('packed', 'Packed', AppColors.crowdPacked),
               ],
             ),
           ],
@@ -621,6 +850,57 @@ class _CreateReportViewState extends State<CreateReportView> {
     );
   }
 
+  Widget _buildTransportTypeOption({
+    required String type,
+    required String label,
+    required IconData icon,
+  }) {
+    final isSelected = _selectedTransportType == type;
+
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          if (_selectedTransportType != type) {
+            setState(() {
+              _selectedTransportType = type;
+            });
+          }
+        },
+        borderRadius: AppSpacing.roundedSm,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryLight : AppColors.surfaceVariant,
+            borderRadius: AppSpacing.roundedSm,
+            border: Border.all(
+              color: isSelected ? AppColors.primary : AppColors.border,
+              width: isSelected ? 1.8 : 1.0,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: AppTypography.labelMedium.copyWith(
+                  color: isSelected ? AppColors.primaryDark : AppColors.textPrimary,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildLocationCard() {
     return AppCard(
       padding: const EdgeInsets.all(14),
@@ -642,6 +922,7 @@ class _CreateReportViewState extends State<CreateReportView> {
                 icon: const Icon(Icons.my_location_rounded, size: 14),
                 label: const Text('Use GPS'),
                 style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 36),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   visualDensity: VisualDensity.compact,
                 ),
@@ -652,7 +933,7 @@ class _CreateReportViewState extends State<CreateReportView> {
           AppTextField(
             label: 'Landmark / Location Description',
             controller: _locationController,
-            hint: 'e.g. Town Hall roundabout near Public Library',
+            hintText: 'e.g. Town Hall roundabout near Public Library',
             prefixIcon: Icons.edit_location_alt_outlined,
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
@@ -701,7 +982,7 @@ class _CreateReportViewState extends State<CreateReportView> {
           AppTextField(
             label: 'Report Title',
             controller: _titleController,
-            hint: 'Brief summary (e.g. Broken bus blocking lane)',
+            hintText: 'Brief summary (e.g. Broken bus blocking lane)',
             prefixIcon: Icons.title_rounded,
             validator: (val) {
               if (val == null || val.trim().length < 5) {
@@ -714,7 +995,7 @@ class _CreateReportViewState extends State<CreateReportView> {
           AppTextField(
             label: 'Detailed Description',
             controller: _descriptionController,
-            hint: 'Provide details to help fellow commuters plan their travel...',
+            hintText: 'Provide details to help fellow commuters plan their travel...',
             maxLines: 4,
             validator: (val) {
               if (val == null || val.trim().length < 10) {

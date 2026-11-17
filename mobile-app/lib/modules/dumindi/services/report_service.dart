@@ -81,6 +81,12 @@ class ReportService {
       locationDescription: 'Route 138 bus bay',
       title: 'Heavy Evening Rush Hour Overcrowding',
       description: 'Huge queue extending over 50 meters. Buses arriving every 10 minutes but fill immediately.',
+      disruptionReason: null,
+      transportType: 'bus',
+      busRouteNumber: '138',
+      destination: 'Maharagama',
+      busRegistrationNumber: 'NA-4512',
+      crowdLevel: 'heavy',
       status: 'submitted',
       reliabilityScore: 60.0,
       confidenceStatus: 'plausible',
@@ -360,10 +366,17 @@ class ReportService {
     required String title,
     required String description,
     String? disruptionReason,
+    String? transportType,
+    String? busRouteNumber,
+    String? destination,
+    String? busRegistrationNumber,
+    String? trainNameOrNumber,
+    String? startingStation,
+    String? crowdLevel,
     String? mediaUrl,
   }) async {
     // 1. Attempt live HTTP submission to /api/v1/reports
-    final body = {
+    final body = <String, dynamic>{
       'categoryId': categoryId,
       'categoryName': categoryName,
       'routeId': routeId,
@@ -376,6 +389,13 @@ class ReportService {
       'title': title,
       'description': description,
       'disruptionReason': disruptionReason,
+      'transportType': transportType,
+      'busRouteNumber': busRouteNumber,
+      'destination': destination,
+      'busRegistrationNumber': busRegistrationNumber,
+      'trainNameOrNumber': trainNameOrNumber,
+      'startingStation': startingStation,
+      'crowdLevel': crowdLevel,
       'isAnonymous': isAnonymous,
       'mediaUrl': mediaUrl,
     };
@@ -410,6 +430,13 @@ class ReportService {
       title: title,
       description: description,
       disruptionReason: disruptionReason,
+      transportType: transportType,
+      busRouteNumber: busRouteNumber,
+      destination: destination,
+      busRegistrationNumber: busRegistrationNumber,
+      trainNameOrNumber: trainNameOrNumber,
+      startingStation: startingStation,
+      crowdLevel: crowdLevel,
       mediaUrl: mediaUrl,
       status: 'submitted',
       reliabilityScore: 20.0,
@@ -577,14 +604,15 @@ class ReportService {
 
   /// Get official transit disruptions
   Future<ApiResponse<List<DisruptionModel>>> getDisruptions() async {
-    // 1. Attempt live HTTP call to /api/v1/incidents
+    // 1. Attempt live HTTP call to /api/v1/reports/disruptions
     final apiRes = await _api.get<List<DisruptionModel>>(
-      '/incidents',
+      '/reports/disruptions',
       includeAuth: false,
       fromJsonT: (json) {
         if (json is List) {
-          // If returned as incidents, can map to disruptions or return seeded
-          return <DisruptionModel>[];
+          return json
+              .map((item) => DisruptionModel.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
         }
         return <DisruptionModel>[];
       },

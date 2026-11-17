@@ -53,7 +53,75 @@ function validateCreateReport(req, res, next) {
     }
   }
 
-  // 5. Geographic coordinates validation
+  // 5. Crowd Report Specific Rules (Category 1)
+  if (catId === 1) {
+    const transportType = req.body.transportType || req.body.transport_type;
+    const busRouteNumber = req.body.busRouteNumber || req.body.bus_route_number;
+    const destination = req.body.destination;
+    const busRegistrationNumber = req.body.busRegistrationNumber || req.body.bus_registration_number;
+    const trainNameOrNumber = req.body.trainNameOrNumber || req.body.train_name_or_number;
+    const startingStation = req.body.startingStation || req.body.starting_station;
+    const crowdLevel = req.body.crowdLevel || req.body.crowd_level;
+
+    const validTransportTypes = ['bus', 'train'];
+    if (!transportType || typeof transportType !== 'string' || !validTransportTypes.includes(transportType.trim().toLowerCase())) {
+      issues.push({
+        field: 'transportType',
+        issue: "Transport type is required for crowd reports and must be either 'bus' or 'train'.",
+      });
+    } else {
+      const type = transportType.trim().toLowerCase();
+      if (type === 'bus') {
+        if (!busRouteNumber || typeof busRouteNumber !== 'string' || busRouteNumber.trim().length === 0) {
+          issues.push({
+            field: 'busRouteNumber',
+            issue: 'Bus route number is required for bus crowd reports.',
+          });
+        }
+        if (!destination || typeof destination !== 'string' || destination.trim().length === 0) {
+          issues.push({
+            field: 'destination',
+            issue: 'Destination is required for bus crowd reports.',
+          });
+        }
+        if (busRegistrationNumber !== undefined && busRegistrationNumber !== null && typeof busRegistrationNumber !== 'string') {
+          issues.push({
+            field: 'busRegistrationNumber',
+            issue: 'Bus registration number must be a valid string if provided.',
+          });
+        }
+      } else if (type === 'train') {
+        if (!trainNameOrNumber || typeof trainNameOrNumber !== 'string' || trainNameOrNumber.trim().length === 0) {
+          issues.push({
+            field: 'trainNameOrNumber',
+            issue: 'Train name or number is required for train crowd reports.',
+          });
+        }
+        if (!startingStation || typeof startingStation !== 'string' || startingStation.trim().length === 0) {
+          issues.push({
+            field: 'startingStation',
+            issue: 'Starting station is required for train crowd reports.',
+          });
+        }
+        if (!destination || typeof destination !== 'string' || destination.trim().length === 0) {
+          issues.push({
+            field: 'destination',
+            issue: 'Destination is required for train crowd reports.',
+          });
+        }
+      }
+    }
+
+    const validCrowdLevels = ['light', 'moderate', 'heavy', 'packed'];
+    if (!crowdLevel || typeof crowdLevel !== 'string' || !validCrowdLevels.includes(crowdLevel.trim().toLowerCase())) {
+      issues.push({
+        field: 'crowdLevel',
+        issue: "Crowd density level is required for crowd reports and must be one of: 'light', 'moderate', 'heavy', 'packed'.",
+      });
+    }
+  }
+
+  // 6. Geographic coordinates validation
   const lat = Number(latitude);
   const lng = Number(longitude);
 
